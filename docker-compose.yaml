@@ -1,0 +1,64 @@
+services:
+  # Сервис PHP-FPM
+  php_app:
+    build:
+      context: ./docker/php # Путь к директории с Dockerfile для PHP
+      dockerfile: Dockerfile
+    container_name: oleg_php_container
+    volumes:
+      - ./:/var/www/html
+      - composer_cache:/root/.composer/cache
+    working_dir: /var/www/html # Рабочая директория остается /var/www/html
+    environment:
+      APP_ENV: local # Laravel обычно использует 'local' для разработки
+      DB_CONNECTION: mysql
+      DB_HOST: mysql_db
+      DB_DATABASE: oleg_shop
+      DB_USERNAME: ibrohim
+      DB_PASSWORD: OlegShop1
+    networks:
+      - app_network
+    dns:
+      - "8.8.8.8"
+      - "1.1.1.1"
+
+  # Сервис Nginx (веб-сервер)
+  nginx_server:
+    image: nginx:alpine
+    container_name: oleg_nginx_container
+    ports:
+      - "8080:80"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php_app
+    networks:
+      - app_network
+
+  # Сервис MySQL
+  mysql_db:
+    image: mysql:8.0
+    container_name: oleg_mysql_container
+    restart: always
+    environment:
+      MYSQL_DATABASE: oleg_shop
+      MYSQL_USER: ibrohim
+      MYSQL_PASSWORD: OlegShop1
+      MYSQL_ROOT_PASSWORD: rootsecret
+    volumes:
+      - mysql_data_volume:/var/lib/mysql
+    ports:
+      - "33061:3306"
+    networks:
+      - app_network
+
+# Сети
+networks:
+  app_network:
+    driver: bridge
+
+# Тома
+volumes:
+  mysql_data_volume:
+  composer_cache:

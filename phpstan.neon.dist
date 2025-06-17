@@ -1,0 +1,21 @@
+includes:
+    - ./vendor/larastan/larastan/extension.neon
+
+parameters:
+    editorUrl: 'anything'
+
+    paths:
+        - app/
+        - routes/
+        - config/
+
+    level: 5
+
+    treatPhpDocTypesAsCertain: false
+
+#    ignoreErrors:
+#        - '#PHPDoc tag @var#'
+
+#    excludePaths:
+#        - ./*/*/FileToBeExcluded.php
+
