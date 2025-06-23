@@ -73,8 +73,13 @@ class User extends Authenticatable
         return $this->hasMany(LoyaltyPointsTransaction::class);
     }
 
-    public function wishlistItems(): HasMany
+    public function wishlistItems()
     {
         return $this->hasMany(WishlistItem::class);
+    }
+
+    public function wishlistProducts()
+    {
+        return $this->belongsToMany(Product::class, 'wishlist_items');
     }
 }

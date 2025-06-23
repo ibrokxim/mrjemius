@@ -24,12 +24,25 @@ class CategoryService
         return $category;
     }
 
-    public function getCategoriesForMainPage(): Collection
+
+    public function getCategoriesForMainPage(int $limit = 10): Collection
     {
         $categories = $this->categoryRepository->getAll();
-        if ($categories->isEmpty()) {
-            throw new NotFoundHttpException('Category not found');
-        }
+//        if ($categories->isEmpty()) {
+//            throw new NotFoundHttpException('Category not found');
+//        }
         return $categories;
     }
+
+    public function getAllCategories(): Collection
+    {
+        return $this->categoryRepository->getAll();
+    }
+
+    public function getCategoriesForFilter(): Collection
+    {
+        // Предполагается, что в репозитории есть метод, который делает `with('children')` и фильтрует по `is_active`
+        return $this->categoryRepository->getAllWithChildren(['is_active' => true]);
+    }
+
 }

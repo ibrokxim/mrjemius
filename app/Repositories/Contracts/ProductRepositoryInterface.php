@@ -3,6 +3,8 @@
 namespace App\Repositories\Contracts;
 
 use App\Models\Product;
+use Illuminate\Contracts\Pagination\Paginator;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface ProductRepositoryInterface
 {
@@ -12,11 +14,7 @@ interface ProductRepositoryInterface
 
     public function getAllProducts();
 
-    public function createProduct(array $data);
+    public function getForCategory(int $categoryId, int $perPage = 12, array $filters = [], array $sortBy = []): Paginator;
 
-    public function updateProduct($product);
-
-    public function deleteProduct($product);
-
-
+    public function search(array $searchData, int $perPage = 12): LengthAwarePaginator;
 }

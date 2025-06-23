@@ -15,6 +15,7 @@
         "laravel/tinker": "^2.8"
     },
     "require-dev": {
+        "barryvdh/laravel-debugbar": "^3.15",
         "fakerphp/faker": "^1.9.1",
         "larastan/larastan": "^2.11",
         "laravel/nightwatch": "^1.7",

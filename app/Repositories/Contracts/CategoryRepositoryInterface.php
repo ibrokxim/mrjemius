@@ -10,4 +10,6 @@ interface CategoryRepositoryInterface
     public function findBySlug(string $slug): ?Category;
 
     public function getAll(): Collection;
+
+    public function getAllWithChildren(array $filters = []): Collection;
 }

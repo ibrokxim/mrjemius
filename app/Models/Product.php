@@ -81,13 +81,14 @@ class Product extends Model
         return $this->hasMany(OrderItem::class);
     }
 
-    public function wishlistedByUsers(): BelongsToMany
+    public function wishlistedByUsers()
     {
-        return $this->belongsToMany(User::class);
+        return $this->belongsToMany(User::class, 'wishlist_items');
     }
 
     public function promotions(): HasMany
     {
         return $this->hasMany(Promotion::class, 'promotion_product');
     }
+    // app/Models/Product.php
 }

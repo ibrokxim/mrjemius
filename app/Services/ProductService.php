@@ -2,28 +2,31 @@
 
 namespace App\Services;
 
+use App\Models\Category;
 use App\Models\Product;
+use App\Repositories\Contracts\ProductRepositoryInterface;
 use App\Traits\HasUniqueSlug;
-use App\Repositories\ProductRepository;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ProductService
 {
     use HasUniqueSlug;
 
-    protected ProductRepository $productRepository;
+    protected ProductRepositoryInterface $productRepository;
 
-    public function __construct(ProductRepository $productRepository)
+    public function __construct(ProductRepositoryInterface $productRepository)
     {
         $this->productRepository = $productRepository;
     }
-    public function getBestSellerProducts(): ?array
+
+    public function getBestSellerProducts(): ?Collection
     {
-        $products =  $this->productRepository->getBestSellerProducts();
-        if ($products->isEmpty()) {
-            throw new NotFoundHttpException('Products not found');
-        }
+        $products = $this->productRepository->getBestSellerProducts();
+//        if ($products->isEmpty()) {
+//            throw new NotFoundHttpException('Products not found');
+//        }
         return $products;
     }
 
@@ -41,55 +44,37 @@ class ProductService
         return $this->productRepository->getAllProducts();
     }
 
-    public function createProduct(array $data)
+    public function getProductsForCategoryPage(Category $category, array $requestData): LengthAwarePaginator
     {
-        return DB::transaction(function () use ($data) {
-            $productData = $this->prepareProductCoreData($data);
-            $product = $this->productRepository->createProduct($productData);
 
-            $this->processAndSaveRelatedData($product, $productData);
-
-            return $this->productRepository->getProductBySlug($product->slug, ['category', 'ceo', 'tags', 'images']);
-        });
-    }
-
-    private function prepareProductCoreData(Product $product): array
-    {
-        $coreData = [
-            'category_id'       => $inputData['category_id'] ?? null,
-            'name'              => $inputData['name'],
-            'sku'               => $inputData['sku'] ?? null,
-            'description'       => $inputData['description'] ?? null,
-            'short_description' => $inputData['short_description'] ?? null,
-            'price'             => $inputData['price'],
-            'sale_price'        => $inputData['sale_price'] ?? null,
-            'stock_quantity'    => $inputData['stock_quantity'],
-            'is_active'         => $inputData['is_active'] ?? true,
-            'is_featured'       => $inputData['is_featured'] ?? false,
-            'weight_kg'         => $inputData['weight_kg'] ?? null,
-            'attributes'        => $inputData['attributes'] ?? null,
+        // 1. Извлекаем и подготавливаем данные для репозитория
+        $filters = [
+            'price_from' => $requestData['price_from'] ?? null,
+            'price_to' => $requestData['price_to'] ?? null,
+            'rating' => $requestData['rating'] ?? null,
         ];
 
-        // Генерация slug
-        if (empty($inputData['slug']) && !empty($inputData['name'])) {
-            $coreData['slug'] = $this->generateUniqueSlugUsingCallback(
-                $inputData['name'],
-                [$this->productRepository, 'slugExists']
-            );
-        } elseif (!empty($inputData['slug'])) {
-            $coreData['slug'] = $this->generateUniqueSlugUsingCallback(
-                $inputData['slug'],
-                [$this->productRepository, 'slugExists']
-            );
-        } else {
-            $coreData['slug'] = null;
-        }
+        $sortBy = match ($requestData['sort'] ?? '') {
+            'price-asc' => ['price' => 'asc'],
+            'price-desc' => ['price' => 'desc'],
+            'rating-desc' => ['rating' => 'desc'],
+            default => ['created_at' => 'desc'],
+        };
 
-        return $coreData;
+        $perPage = $requestData['per_page'] ?? 12;
+
+        // 2. Вызываем метод репозитория с подготовленными данными
+        return $this->productRepository->getForCategory(
+            $category->id,
+            (int) $perPage,
+            array_filter($filters), // Передаем только не-пустые фильтры
+            $sortBy
+        );
     }
 
-    private function processAndSaveRelatedData(Product $product, array $data)
+    public function searchProducts(array $searchData, int $perPage = 12): LengthAwarePaginator
     {
-
+        return $this->productRepository->search($searchData, $perPage);
     }
+
 }
