@@ -14,7 +14,7 @@
                         data-size="large"
                         data-userpic="true"
                         data-request-access="write"
-                        data-auth-url="https://d6d9-195-158-14-62.ngrok-free.app/auth/telegram/callback">
+                        data-auth-url="https://mrdjemiuszero.uz/auth/telegram/callback">
                 </script>
 
             </div>
