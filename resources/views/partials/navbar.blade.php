@@ -234,7 +234,7 @@
                     <div>
                         <ul class="navbar-nav align-items-center">
                             <li class="nav-item dropdown w-100 w-lg-auto">
-                                <a class="nav-link " href="{{ route('categories') }}" role="button"  aria-expanded="false">Продукты</a>
+                                <a class="nav-link " href="#" role="button"  aria-expanded="false">Продукты</a>
                             </li>
                             <li class="nav-item dropdown w-100 w-lg-auto">
                                 <a class="nav-link " href="{{ route('blog.index') }}" role="button"  aria-expanded="false">Полезные советы</a>
