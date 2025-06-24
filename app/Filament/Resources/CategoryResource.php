@@ -84,7 +84,7 @@ class CategoryResource extends Resource
 
                                         FileUpload::make('image_url')
                                             ->label('Изображение категории')
-                                            ->image()
+//                                            ->image()
                                             ->directory('category-images')
                                             ->visibility('public')
                                             ->nullable(),

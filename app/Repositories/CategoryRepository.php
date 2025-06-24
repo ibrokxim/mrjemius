@@ -23,24 +23,22 @@ class CategoryRepository extends CoreRepository implements CategoryRepositoryInt
 
     public function getAll(): Collection
     {
-        return $this->startConditions()->all();
+        return $this->startConditions()->all()->where('is_active', 1);
     }
 
 
     public function getAllWithChildren(array $filters = []): Collection
     {
         $query = $this->startConditions()
-            ->whereNull('parent_id') // Выбираем только родительские категории (у которых нет родителя)
+            ->whereNull('parent_id')
             ->with(['children' => function ($query) use ($filters) {
-                // Загружаем дочерние категории и сразу применяем к ним фильтры
                 if (isset($filters['is_active'])) {
                     $query->where('is_active', (bool)$filters['is_active']);
                 }
-                $query->orderBy('sort_order', 'asc'); // Сортируем дочерние категории
+                $query->orderBy('sort_order', 'asc');
             }])
-            ->orderBy('sort_order', 'asc'); // Сортируем родительские категории
+            ->orderBy('sort_order', 'asc');
 
-        // Применяем фильтры к родительским категориям
         if (isset($filters['is_active'])) {
             $query->where('is_active', (bool)$filters['is_active']);
         }
