@@ -1,16 +1,15 @@
 <?php
 
-namespace App\Filament\Resources\CategoryResource\Pages;
+namespace App\Filament\Resources\BannerResource\Pages;
 
+use App\Filament\Resources\BannerResource;
 use Filament\Actions;
-use App\Models\Category;
 use Filament\Resources\Pages\CreateRecord;
-use App\Filament\Resources\CategoryResource;
 
-class CreateCategory extends CreateRecord
+class CreateBanner extends CreateRecord
 {
     use CreateRecord\Concerns\Translatable;
-    protected static string $resource = CategoryResource::class;
+    protected static string $resource = BannerResource::class;
 
     protected function getHeaderActions(): array
     {
@@ -18,6 +17,11 @@ class CreateCategory extends CreateRecord
             Actions\LocaleSwitcher::make(),
         ];
     }
+    /**
+     * Эта функция позволяет перенаправить пользователя после создания записи
+     * на страницу редактирования с активной локалью, которая была выбрана при создании.
+     * Это улучшает UX.
+     */
     protected function getRedirectUrl(): string
     {
         $record = $this->getRecord();
@@ -32,18 +36,5 @@ class CreateCategory extends CreateRecord
             'record' => $record,
             'activeLocale'      => $activeLocale,
         ]);
-    }
-
-    protected function afterCreate(): void
-    {
-        /** @var Category $record */
-        $record = $this->record;
-        $seoData = $this->data['seo_data'] ?? null; // Получаем данные из временного statePath
-
-        if ($seoData && method_exists($record, 'saveSeo')) {
-            $locale = $seoData['locale'] ?? null;
-            unset($seoData['locale']);
-            $record->saveSeo($seoData, $locale);
-        }
     }
 }

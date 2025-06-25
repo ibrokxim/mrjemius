@@ -4,6 +4,7 @@
     <!-- Required meta tags -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta content="Codescandy" name="author" />
     <title>@yield('title', 'Mr. Djemius Zero')</title>
 
@@ -62,5 +63,6 @@
 <script src="{{ asset('assets/js/vendors/validation.js') }}"></script>
 
 @stack('scripts')
+
 </body>
 </html>

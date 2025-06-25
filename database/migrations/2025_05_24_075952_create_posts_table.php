@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->comment('Author')->constrained('users')->onDelete('cascade');
             // $table->foreignId('post_category_id')->nullable()->constrained('post_categories')->onDelete('set null'); // Если одна категория на пост
-            $table->string('title');
+            $table->text('title');
             $table->string('slug')->unique();
             $table->text('excerpt')->nullable(); // Краткое описание
             $table->longText('content');

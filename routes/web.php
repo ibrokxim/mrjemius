@@ -23,6 +23,11 @@ Route::get('/search', [SearchController::class, 'searchProducts'])->name('search
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{post:slug}', [BlogController::class, 'show'])->name('blog.show');
 
+Route::middleware('auth')->prefix('wishlist')->name('wishlist.')->group(function () {
+    Route::get('/', [WishlistController::class, 'index'])->name('index');
+    Route::post('/add/{product}', [WishlistController::class, 'add'])->name('add');
+    Route::post('/remove/{product}', [WishlistController::class, 'remove'])->name('remove');
+});
 
 Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index')->middleware('auth');
 Route::post('/wishlist/toggle/{product}', [WishlistController::class, 'toggle'])->name('wishlist.toggle')->middleware('auth');

@@ -9,7 +9,7 @@
                 <div style="background: url({{ asset('assets/images/slider/slide-1.jpg') }}) no-repeat; background-size: cover; border-radius: 0.5rem; background-position: center">
                     <div class="ps-lg-12 py-lg-16 col-xxl-5 col-md-7 py-14 px-8 text-xs-center">
                         <span class="badge text-bg-warning">Распродажа! Скидка 50%</span>
-                        <h2 class="text-dark display-5 fw-bold mt-4">Mr.Jemius</h2>
+                        <h2 class="text-dark display-5 fw-bold mt-4">Mr.Djemius</h2>
                         <p class="lead">Представляем новую модель онлайн-покупок продуктов с удобной доставкой на дом.</p>
                         <a href="#" class="btn btn-dark mt-3">
                             В магазин
@@ -77,7 +77,7 @@
                                 <div class="me-3">
                                     <img src="{{ asset('assets/images/icons/refresh-cw.svg') }}" alt="Гарантия качества" />
                                 </div>
-                                <h3 class="h5 mb-0">Гарантия качества</h3>
+                                <h3 class="h5 mb-0">Гарантия качествa</h3>
                             </div>
                             <p>Не довольны продуктом? Верните его при доставке и получите возврат средств.</p>
                         </div>
@@ -217,5 +217,65 @@
             </div>
         </div>
     </section>
+    @push('scripts')
+        <script>
+            console.log('✅ wishlist script active');
+
+            document.addEventListener('DOMContentLoaded', function () {
+                document.body.addEventListener('click', function(event) {
+                    let wishlistButton = event.target.closest('.wishlist-toggle-btn');
+                    if (!wishlistButton) return;
+
+                    event.preventDefault();
+
+                    const productId = wishlistButton.dataset.productId;
+                    const url = `/wishlist/toggle/${productId}`;
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+                    fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                document.querySelectorAll(`.wishlist-toggle-btn[data-product-id="${productId}"]`).forEach(btn => {
+                                    const icon = btn.querySelector('i');
+                                    if (data.status === 'added') {
+                                        btn.classList.add('active', 'text-danger');
+                                        icon.classList.remove('bi-heart');
+                                        icon.classList.add('bi-heart-fill');
+                                        btn.setAttribute('title', 'Убрать из избранного');
+                                    } else {
+                                        btn.classList.remove('active', 'text-danger');
+                                        icon.classList.remove('bi-heart-fill');
+                                        icon.classList.add('bi-heart');
+                                        btn.setAttribute('title', 'В избранное');
+                                    }
+                                });
+
+                                const wishlistCounter = document.getElementById('wishlist-counter');
+                                if (wishlistCounter) {
+                                    wishlistCounter.innerText = data.wishlistCount;
+                                    wishlistCounter.style.display = data.wishlistCount > 0 ? 'inline' : 'none';
+                                }
+                            } else {
+                                alert(data.message || 'Ошибка при обновлении избранного');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Ошибка при отправке запроса:', error);
+                            if (error.response && error.response.status === 401) {
+                                window.location.href = '/login';
+                            }
+                        });
+                });
+            });
+        </script>
+    @endpush
 
 @endsection

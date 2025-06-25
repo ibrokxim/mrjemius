@@ -13,11 +13,11 @@
             <div class="row w-100 align-items-center gx-lg-2 gx-0">
                 <div class="col-xxl-2 col-lg-3 col-md-6 col-5">
                     <a class="navbar-brand d-none d-lg-block" href="{{route('welcome')}}">
-                        <img src="{{ asset('assets/images/logo/freshcart-logo.svg')}}" alt="eCommerce HTML Template" />
+                        <img style="width: 170px; height: 40px;" src="{{ asset('assets/images/logo/logo.png')}}" alt="eCommerce HTML Template" />
                     </a>
                     <div class="d-flex justify-content-between w-100 d-lg-none">
                         <a class="navbar-brand" href="{{route('welcome')}}">
-                            <img src="{{ asset('assets/images/logo/freshcart-logo.svg')}}" alt="eCommerce HTML Template" />
+                            <img  style="width: 170px; height: 40px;" src="{{ asset('assets/images/logo/logo.png')}}" alt="eCommerce HTML Template" />
                         </a>
                     </div>
                 </div>
@@ -53,24 +53,15 @@
                 <div class="col-lg-2 col-xxl-2 text-end col-md-6 col-7">
                     <div class="list-inline">
                         <div class="list-inline-item me-5">
-                            <a href="pages/shop-wishlist.html" class="text-muted position-relative">
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="20"
-                                    height="20"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    class="feather feather-heart">
-                                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                                </svg>
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success">
-
-                                 <span class="visually-hidden">unread messages</span>
-                              </span>
+                            <a href="{{ route('wishlist.index') }}" class="text-muted position-relative">
+                                <i class="bi bi-heart"></i>
+                                @auth
+                                    @if(Auth::user()->wishlistProducts()->count() > 0)
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success" id="wishlist-counter">
+            {{ Auth::user()->wishlistProducts()->count() }}
+        </span>
+                                    @endif
+                                @endauth
                             </a>
                         </div>
                         <div class="list-inline-item me-5">
@@ -252,7 +243,7 @@
                             <li class="nav-item dropdown w-100 w-lg-auto">
                                 <a class="nav-link " href="https://www.grechkafood.uz/" role="button"  aria-expanded="false">Гречка</a>
                             </li>
-{{--
+
                         </ul>
                     </div>
                 </div>
@@ -260,10 +251,5 @@
         </div>
     </nav>
 </div>
-<script async src="https://telegram.org/js/telegram-widget.js?7"
-        data-telegram-login="mrjemius_bot"
-        data-size="large"
-        data-userpic="true"
-        data-request-access="write"
-        data-auth-url="https://d6d9-195-158-14-62.ngrok-free.app/auth/telegram/callback">
-</script>
+
+

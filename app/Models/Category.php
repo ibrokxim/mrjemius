@@ -6,11 +6,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Translatable\HasTranslations;
 
 class Category extends Model
 {
-    use HasFactory;
+    use HasFactory, HasTranslations;
 
+    public array $translatable = [
+        'name',
+        'description',
+        'meta_title',
+        'meta_description',
+        'meta_keywords',
+        'og_title',
+        'og_description',
+    ];
     protected $table = 'categories';
 
     protected $fillable = [

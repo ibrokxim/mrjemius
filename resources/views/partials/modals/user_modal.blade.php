@@ -8,7 +8,6 @@
             <div class="modal-body text-center">
                 <p class="mb-4">Войдите через Telegram, чтобы сохранять корзину, отслеживать заказы и пользоваться бонусами.</p>
 
-                {{-- Скрипт для кнопки Telegram Login Widget --}}
                 <script async src="https://telegram.org/js/telegram-widget.js?22"
                         data-telegram-login="mrjemius_bot"
                         data-size="large"

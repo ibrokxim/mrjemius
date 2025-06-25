@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use Filament\Forms;
+use Filament\Resources\Concerns\Translatable;
 use Filament\Tables;
 use App\Models\Product;
 use Filament\Forms\Form;
@@ -28,6 +29,7 @@ use App\Filament\Resources\ProductResource\RelationManagers\ReviewsRelationManag
 
 class ProductResource extends Resource
 {
+    use Translatable;
     protected static ?string $model = Product::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
@@ -86,7 +88,7 @@ class ProductResource extends Resource
                                             ->nullable(),
 
                                         Textarea::make('short_description')
-                                            ->label('Краткое описание')
+                                            ->label('Состав')
                                             ->maxLength(500)
                                             ->columnSpanFull()
                                             ->nullable(),
@@ -296,6 +298,11 @@ class ProductResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->with(['category', 'primaryImage']);
+    }
+
+    public static function getTranslatableLocales(): array
+    {
+        return ['ru', 'uz'];
     }
 
 }

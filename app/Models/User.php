@@ -73,7 +73,7 @@ class User extends Authenticatable
         return $this->hasMany(LoyaltyPointsTransaction::class);
     }
 
-    public function wishlistItems()
+    public function wishlistItems(): HasMany
     {
         return $this->hasMany(WishlistItem::class);
     }
@@ -81,5 +81,10 @@ class User extends Authenticatable
     public function wishlistProducts()
     {
         return $this->belongsToMany(Product::class, 'wishlist_items');
+    }
+
+    public function hasInWishlist(Product $product): bool
+    {
+        return $this->wishlistProducts()->where('product_id', $product->id)->exists();
     }
 }

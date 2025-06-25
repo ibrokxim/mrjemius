@@ -6,7 +6,7 @@
 
             {{-- КОЛОНКА 1: Компания --}}
             <div class="col-12 col-md-6 col-lg-2">
-                <h6 class="mb-4">Компания</h6>
+                <h6 class="mb-4">Продукты</h6>
                 <ul class="nav flex-column">
                     <li class="nav-item mb-2"><a href="{{-- route('about') --}}#!" class="nav-link">О компании</a></li>
                     <li class="nav-item mb-2"><a href="{{-- route('stores') --}}#!" class="nav-link">Точки продаж</a></li>
@@ -37,7 +37,7 @@
 
             {{-- КОЛОНКА 3: Информация --}}
             <div class="col-12 col-md-6 col-lg-2">
-                <h6 class="mb-4">Информация</h6>
+                <h6 class="mb-4">Полезные советы</h6>
                 <ul class="nav flex-column">
                     <li class="nav-item mb-2"><a href="{{-- route('page', 'how-to-order') --}}#!" class="nav-link">Как сделать заказ</a></li>
                     <li class="nav-item mb-2"><a href="{{-- route('page', 'payment') --}}#!" class="nav-link">Оплата</a></li>
@@ -52,7 +52,7 @@
 
             {{-- КОЛОНКА 4: Цели --}}
             <div class="col-12 col-md-6 col-lg-2">
-                <h6 class="mb-4">Цели</h6>
+                <h6 class="mb-4">Правильное питание</h6>
                 <ul class="nav flex-column">
                     <li class="nav-item mb-2"><a href="#!" class="nav-link">Диетическое питание</a></li>
                     <li class="nav-item mb-2"><a href="#!" class="nav-link">Кето диета</a></li>
@@ -70,13 +70,10 @@
                 <h6 class="mb-4">Контакты</h6>
                 <ul class="nav flex-column">
                     <li class="nav-item mb-3">
-                        <a href="tel:+78005001743" class="nav-link p-0 fs-5 fw-bold text-dark">+7 (800) 500-17-43</a>
+                        <a href="tel:+998901884748" class="nav-link p-0 fs-5 fw-bold text-dark">+998 90 188 47 48</a>
                     </li>
                     <li class="nav-item mb-3">
-                        <a href="mailto:hello@mrdjemiuszero.com" class="nav-link p-0 text-muted">hello@mrdjemiuszero.com</a>
-                    </li>
-                    <li class="nav-item mb-3">
-                        <span class="nav-link p-0 text-muted">г. Санкт-Петербург, Лиговский пр., д. 50, лит. О, корп. 1, офис 4</span>
+                        <a href="mailto:mrdjemiuszero.uz@gmail.com" class="nav-link p-0 text-muted">mrdjemiuszero.uz@gmail.com</a>
                     </li>
                 </ul>
                 {{-- Иконки соцсетей --}}
@@ -94,7 +91,7 @@
                     </li>
                     <li class="list-inline-item">
                         <a href="#!" class="btn btn-xs btn-social btn-icon">
-                            <i class="bi bi-youtube"></i>
+                            <i class="bi bi-instagram"></i>
                         </a>
                     </li>
                 </ul>
@@ -118,13 +115,10 @@
                         {{-- Ссылки на партнеров по оплате, если нужны --}}
                         <li class="list-inline-item text-dark">Способы оплаты</li>
                         <li class="list-inline-item">
-                            <a href="#!"><img src="{{ asset('assets/images/payment/visa.svg') }}" alt="Visa" /></a>
+                            <a href="#!"><img src="{{ asset('assets/images/payment/uzcard.svg') }}" alt="Uzcard" /></a>
                         </li>
                         <li class="list-inline-item">
-                            <a href="#!"><img src="{{ asset('assets/images/payment/mastercard.svg') }}" alt="Mastercard" /></a>
-                        </li>
-                        <li class="list-inline-item">
-                            <a href="#!"><img src="{{ asset('assets/images/payment/paypal.svg') }}" alt="PayPal" /></a>
+                            <a href="#!"><img src="{{ asset('assets/images/payment/payme.svg') }}" alt="Payme" /></a>
                         </li>
                     </ul>
                 </div>

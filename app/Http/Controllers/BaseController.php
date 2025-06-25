@@ -13,6 +13,7 @@ class BaseController extends Controller
     ) {}
     public function returnWelcomePage()
     {
+
         $categories = $this->categoryService->getCategoriesForMainPage(10); // Пример метода
         $popularProducts = $this->productService->getAllProducts(); // Пример метода
         $bestsellerProducts = $this->productService->getBestSellerProducts(8);
