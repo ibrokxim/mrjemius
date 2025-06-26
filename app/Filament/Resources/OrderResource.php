@@ -14,7 +14,7 @@ class OrderResource extends Resource
 {
     protected static ?string $model = Order::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
+    protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
     protected static ?string $navigationGroup = 'Продажи';
     protected static ?string $modelLabel = 'Заказ';
     protected static ?string $pluralModelLabel = 'Заказы';

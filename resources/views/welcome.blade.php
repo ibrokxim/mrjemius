@@ -6,31 +6,21 @@
     <section class="mt-8">
         <div class="container">
             <div class="hero-slider">
-                <div style="background: url({{ asset('assets/images/slider/slide-1.jpg') }}) no-repeat; background-size: cover; border-radius: 0.5rem; background-position: center">
-                    <div class="ps-lg-12 py-lg-16 col-xxl-5 col-md-7 py-14 px-8 text-xs-center">
-                        <span class="badge text-bg-warning">Распродажа! Скидка 50%</span>
-                        <h2 class="text-dark display-5 fw-bold mt-4">Mr.Djemius</h2>
-                        <p class="lead">Представляем новую модель онлайн-покупок продуктов с удобной доставкой на дом.</p>
-                        <a href="#" class="btn btn-dark mt-3">
-                            В магазин
-                            <i class="feather-icon icon-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
-                <div style="background: url({{ asset('assets/images/slider/slider-2.jpg') }}) no-repeat; background-size: cover; border-radius: 0.5rem; background-position: center">
-                    <div class="ps-lg-12 py-lg-16 col-xxl-5 col-md-7 py-14 px-8 text-xs-center">
-                        <span class="badge text-bg-warning">Распродажа! Скидка 50%</span>
-                        <h2 class="text-dark display-5 fw-bold mt-4">Супермаркет Свежих Продуктов</h2>
-                        <p class="lead">Представляем новую модель онлайн-покупок продуктов с удобной доставкой на дом.</p>
-                        <a href="#" class="btn btn-dark mt-3">
-                            В магазин
-                            <i class="feather-icon icon-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                </div>
+                @foreach($banners as $banner)
+                    {{--                    <a href="{{ route('banner.show', $banner->slug) }}" style="display: block;">--}}
+                    <a href="#" style="display: block;">
+                        <div style="
+                    background: url({{ asset('storage/' . $banner->banner_image_url) }}) no-repeat;
+                    background-size: cover;
+                    border-radius: 0.5rem;
+                    background-position: center;
+                    height: 400px;
+                ">
+                        </div>
+                    </a>
+                @endforeach
             </div>
         </div>
-    </section>
 
     <section class="my-lg-14 my-8">
         <div class="container">
@@ -186,30 +176,34 @@
             <div class="row">
                 <div class="col-12 col-md-6 mb-3 mb-lg-0">
                     <div>
-                        <div class="py-10 px-8 rounded" style="background: url(assets/images/banner/grocery-banner.png) no-repeat; background-size: cover; background-position: center">
-                            <div>
-                                <h3 class="fw-bold mb-1">Fruits &amp; Vegetables</h3>
+                        <div class="py-10 px-8 rounded" style="background: url(assets/images/banner/grechka.png)
+                        no-repeat;
+                        background-size: cover; background-position: center">
+                            <div class="text-white" >
+                                <h3 class="fw-bold mb-1 text-white">Grechka - правильное питание</h3>
                                 <p class="mb-4">
-                                    Get Upto
+                                    Скидки до
                                     <span class="fw-bold">30%</span>
-                                    Off
+
                                 </p>
-                                <a href="#!" class="btn btn-dark">Shop Now</a>
+                                <a href="https://www.grechkafood.uz/" class="btn btn-dark">Перейти </a>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-12 col-md-6">
                     <div>
-                        <div class="py-10 px-8 rounded" style="background: url(assets/images/banner/grocery-banner-2.jpg) no-repeat; background-size: cover; background-position: center">
-                            <div>
-                                <h3 class="fw-bold mb-1">Freshly Baked Buns</h3>
+                        <div class="py-10 px-8 rounded" style="background: url(assets/images/banner/grechka.png)
+                        no-repeat;
+                        background-size: cover; background-position: center">
+                            <div class="text-white" >
+                                <h3 class="fw-bold mb-1 text-white">Grechka - правильное питание</h3>
                                 <p class="mb-4">
-                                    Get Upto
-                                    <span class="fw-bold">25%</span>
-                                    Off
+                                    Скидки до
+                                    <span class="fw-bold">30%</span>
+
                                 </p>
-                                <a href="#!" class="btn btn-dark">Shop Now</a>
+                                <a href="https://www.grechkafood.uz/" class="btn btn-dark">Перейти </a>
                             </div>
                         </div>
                     </div>
@@ -217,65 +211,87 @@
             </div>
         </div>
     </section>
-    @push('scripts')
-        <script>
-            console.log('✅ wishlist script active');
+        @push('scripts')
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    console.log('DOM fully loaded and parsed. Wishlist script starting.');
 
-            document.addEventListener('DOMContentLoaded', function () {
-                document.body.addEventListener('click', function(event) {
-                    let wishlistButton = event.target.closest('.wishlist-toggle-btn');
-                    if (!wishlistButton) return;
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+                    if (!csrfToken) {
+                        console.error('CSRF token meta tag not found!');
+                        return;
+                    }
+                    const token = csrfToken.getAttribute('content');
+                    console.log('CSRF Token:', token);
 
-                    event.preventDefault();
+                    const wishlistToggleButtons = document.querySelectorAll('.wishlist-toggle-btn');
+                    console.log(`Found ${wishlistToggleButtons.length} wishlist toggle buttons.`);
 
-                    const productId = wishlistButton.dataset.productId;
-                    const url = `/wishlist/toggle/${productId}`;
-                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                    wishlistToggleButtons.forEach(button => {
+                        console.log('Attaching click listener to button for product ID:', button.dataset.productId);
+                        button.addEventListener('click', async function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
 
-                    fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': csrfToken,
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                document.querySelectorAll(`.wishlist-toggle-btn[data-product-id="${productId}"]`).forEach(btn => {
-                                    const icon = btn.querySelector('i');
-                                    if (data.status === 'added') {
-                                        btn.classList.add('active', 'text-danger');
-                                        icon.classList.remove('bi-heart');
-                                        icon.classList.add('bi-heart-fill');
-                                        btn.setAttribute('title', 'Убрать из избранного');
-                                    } else {
-                                        btn.classList.remove('active', 'text-danger');
-                                        icon.classList.remove('bi-heart-fill');
-                                        icon.classList.add('bi-heart');
-                                        btn.setAttribute('title', 'В избранное');
-                                    }
-                                });
+                            const currentButton = this;
+                            const productId = currentButton.dataset.productId;
+                            const icon = currentButton.querySelector('i');
 
-                                const wishlistCounter = document.getElementById('wishlist-counter');
-                                if (wishlistCounter) {
-                                    wishlistCounter.innerText = data.wishlistCount;
-                                    wishlistCounter.style.display = data.wishlistCount > 0 ? 'inline' : 'none';
-                                }
-                            } else {
-                                alert(data.message || 'Ошибка при обновлении избранного');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Ошибка при отправке запроса:', error);
-                            if (error.response && error.response.status === 401) {
-                                window.location.href = '/login';
-                            }
-                        });
+                            console.log(`Wishlist toggle clicked for product ID: ${productId}`);
+                            // alert(`Клик на избранное для товара ID: ${productId}. Сейчас будет AJAX (если раскомментировать).`);
+
+                            // ---- Временно закомментируем AJAX для теста самого обработчика ----
+
+                            currentButton.disabled = true;
+                            if (icon) icon.className = 'spinner-border spinner-border-sm'; // Простой спиннер
+
+                            try {
+                                const wishlistToggleUrlTemplate = "{{ route('wishlist.toggle', ['product' => ':productIdPlaceholder']) }}";
+                const finalWishlistUrl = wishlistToggleUrlTemplate.replace(':productIdPlaceholder', productId);
+                console.log('Attempting AJAX POST to:', finalWishlistUrl);
+
+                const response = await fetch(finalWishlistUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': token
+                    }
                 });
-            });
-        </script>
+
+                console.log('AJAX response status:', response.status);
+                const data = await response.json();
+                console.log('AJAX response data:', data);
+
+                if (response.ok && data.success) {
+                    // showAlert('success', data.message); // Ваша функция showAlert
+                    console.log('Wishlist success:', data.message);
+                    if (data.status === 'added') {
+                        currentButton.classList.add('active', 'text-danger');
+                        currentButton.title = 'Убрать из избранного';
+                        if (icon) icon.className = 'bi bi-heart-fill';
+                    } else {
+                        currentButton.classList.remove('active', 'text-danger');
+                        currentButton.title = 'В избранное';
+                        if (icon) icon.className = 'bi bi-heart';
+                    }
+                } else {
+                    // showAlert('danger', data.message || 'Не удалось обновить избранное.');
+                    console.error('Wishlist error from server:', data.message);
+                    if (icon) icon.className = currentButton.classList.contains('active') ? 'bi bi-heart-fill' : 'bi bi-heart'; // Вернуть иконку
+                }
+            } catch (error) {
+                console.error('AJAX critical error:', error);
+                // showAlert('danger', 'Ошибка при обновлении избранного.');
+                if (icon) icon.className = currentButton.classList.contains('active') ? 'bi bi-heart-fill' : 'bi bi-heart'; // Вернуть иконку
+            } finally {
+                currentButton.disabled = false;
+            }
+
+                        });
+                    });
+                });
+            </script>
     @endpush
+
 
 @endsection

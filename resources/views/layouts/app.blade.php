@@ -61,7 +61,6 @@
 <script src="{{ asset('assets/js/vendors/tns-slider.js') }}"></script>
 <script src="{{ asset('assets/js/vendors/zoom.js') }}"></script>
 <script src="{{ asset('assets/js/vendors/validation.js') }}"></script>
-
 @stack('scripts')
 
 </body>

@@ -202,7 +202,7 @@
                             {{-- Вкладка "Отзывы" --}}
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews-tab-pane" type="button" role="tab" aria-controls="reviews-tab-pane" aria-selected="false">
-                                    Отзывы
+                                    Отзывы({{$product->reviews()->count()}})
                                 </button>
                             </li>
                         </ul>
@@ -351,4 +351,38 @@
             }
         });
     </script>
+    @push('scripts')
+        {{-- ... ваши другие скрипты ... --}}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const writeReviewBtn = document.getElementById('write-review-btn');
+                const reviewFormContainer = document.getElementById('review-form-container');
+
+                if (writeReviewBtn && reviewFormContainer) {
+                    writeReviewBtn.addEventListener('click', function() {
+                        // Плавно показываем/скрываем форму
+                        if (reviewFormContainer.style.display === 'none') {
+                            reviewFormContainer.style.display = 'block';
+                            this.innerText = 'Скрыть форму';
+                        } else {
+                            reviewFormContainer.style.display = 'none';
+                            this.innerText = 'Написать отзыв';
+                        }
+                    });
+                }
+
+                // Если были ошибки валидации при отправке формы,
+                // то после перезагрузки страницы форма должна быть сразу видна.
+                @if($errors->any())
+                if (reviewFormContainer) {
+                    reviewFormContainer.style.display = 'block';
+                    if (writeReviewBtn) {
+                        writeReviewBtn.innerText = 'Скрыть форму';
+                    }
+                }
+                @endif
+
+            });
+        </script>
+    @endpush
 @endpush

@@ -1,5 +1,5 @@
 # Используем официальный образ PHP 8.1-fpm (выберите нужную вам версию PHP)
-FROM php:8.1-fpm-alpine
+FROM php:8.2-fpm-alpine
 
 # Устанавливаем системные зависимости, необходимые для расширений PHP
 RUN apk add --no-cache \
@@ -31,7 +31,7 @@ RUN docker-php-ext-install \
 # Устанавливаем Composer глобально
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-
+COPY ./custom-php-settings.ini /usr/local/etc/php/conf.d/zz-custom-php-settings.ini
 
 # Устанавливаем рабочую директорию
 WORKDIR /var/www/html

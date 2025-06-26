@@ -17,8 +17,8 @@ class BaseController extends Controller
         $categories = $this->categoryService->getCategoriesForMainPage(10); // Пример метода
         $popularProducts = $this->productService->getAllProducts(); // Пример метода
         $bestsellerProducts = $this->productService->getBestSellerProducts(8);
-
-        return view('welcome', compact('categories', 'popularProducts', 'bestsellerProducts'));
+        $banners = \App\Models\Banner::where('is_active', 1)->get();
+        return view('welcome', compact('categories','banners', 'popularProducts', 'bestsellerProducts'));
     }
     public function index()
     {

@@ -3,14 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Spatie\Translatable\HasTranslations;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Spatie\Translatable\HasTranslations;
 
 class Product extends Model
 {
@@ -19,7 +19,7 @@ class Product extends Model
         'name',
         'description',
         'short_description',
-        // Добавляем SEO поля сюда
+
         'meta_title',
         'meta_description',
         'meta_keywords',
@@ -99,6 +99,16 @@ class Product extends Model
         return $this->belongsToMany(User::class, 'wishlist_items');
     }
 
+    public function cartItems(): HasMany
+    {
+        return $this->hasMany(CartItem::class);
+    }
+
+    public function cartedByUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'cart_items');
+    }
+
     public function promotions(): HasMany
     {
         return $this->hasMany(Promotion::class, 'promotion_product');
@@ -113,4 +123,5 @@ class Product extends Model
     {
         return $this->seoMetas()->where('locale', app()->getLocale())->first();
     }
+
 }

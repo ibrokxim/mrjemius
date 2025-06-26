@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\FilterProductsRequest;
 use App\Models\Category;
-use App\Services\CategoryService;
 use App\Services\ProductService;
+use App\Services\CategoryService;
 use Illuminate\Http\JsonResponse;
+use App\Http\Requests\FilterProductsRequest;
 
 class CategoryController extends Controller
 {

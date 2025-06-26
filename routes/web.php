@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BlogController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\WishlistController;
 use Illuminate\Support\Facades\Route;
@@ -8,6 +9,7 @@ use App\Http\Controllers\BaseController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\TelegramAuthController;
 
 
@@ -25,9 +27,24 @@ Route::get('/blog/{post:slug}', [BlogController::class, 'show'])->name('blog.sho
 
 Route::middleware('auth')->prefix('wishlist')->name('wishlist.')->group(function () {
     Route::get('/', [WishlistController::class, 'index'])->name('index');
-    Route::post('/add/{product}', [WishlistController::class, 'add'])->name('add');
-    Route::post('/remove/{product}', [WishlistController::class, 'remove'])->name('remove');
 });
 
 Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index')->middleware('auth');
 Route::post('/wishlist/toggle/{product}', [WishlistController::class, 'toggle'])->name('wishlist.toggle')->middleware('auth');
+
+// Маршруты корзины (доступны всем)
+Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+Route::get('/cart/data', [CartController::class, 'getCartData'])->name('cart.data');
+
+// Маршруты корзины (только для авторизованных)
+Route::middleware('auth')->group(function () {
+    Route::post('/cart/add/{product}', [CartController::class, 'add'])->name('cart.add');
+    Route::post('/cart/update/{cartItem}', [CartController::class, 'update'])->name('cart.update');
+    Route::post('/cart/remove/{cartItem}', [CartController::class, 'remove'])->name('cart.remove');
+    Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
+    Route::post('/cart/move-from-wishlist', [CartController::class, 'moveFromWishlist'])->name('cart.move.from.wishlist');
+});
+
+
+Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store')->middleware('auth');
+Route::get('/contacts', [PageController::class, 'contacts'])->name('contacts');

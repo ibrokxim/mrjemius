@@ -16,7 +16,7 @@ return new class extends Migration
             $table->text('name');
             $table->string('slug')->unique();
             $table->text('description');
-            $table->foreignId('parent_id')->nullable()->constrained('categories')->nullOnDelete();
+            $table->foreignId('parent_id')->nullable()->constrained('categories')->cascadeOnDelete();
             $table->string('image_url')->nullable();
             $table->boolean('is_active')->default(true);
             $table->integer('sort_order')->default(0);
@@ -29,6 +29,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('categories', function (Blueprint $table) {
+            $table->dropForeign(['parent_id']);
+        });
+
         Schema::dropIfExists('categories');
     }
 };

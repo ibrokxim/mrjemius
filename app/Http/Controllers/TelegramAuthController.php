@@ -29,6 +29,11 @@ class TelegramAuthController extends Controller
         );
 
         Auth::login($user, true); // Авторизация
+        
+        // Мигрируем корзину гостя к авторизованному пользователю
+        $cartController = new CartController();
+        $cartController->migrateGuestCart();
+        
         return redirect('/'); // Куда перенаправить
     }
 

@@ -5,6 +5,9 @@ namespace App\Filament\Resources;
 use Filament\Tables;
 use App\Models\Banner;
 use Filament\Forms\Form;
+use Filament\Tables\Columns\BooleanColumn;
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
 use App\Filament\Resources\BannerResource\Pages;
@@ -82,7 +85,16 @@ class BannerResource extends Resource
     {
         return $table
             ->columns([
-                //
+                ImageColumn::make('banner_image_url')
+                    ->label('Изображение')
+                    ->defaultImageUrl(url('banner_image_url')),
+                TextColumn::make('title')
+                    ->label('Заголовок')
+                    ->searchable()
+                    ->sortable(),
+                BooleanColumn::make('is_active')
+                    ->label('Активна')
+                    ->sortable(),
             ])
             ->filters([
                 //
@@ -116,6 +128,6 @@ class BannerResource extends Resource
 
     public static function getTranslatableLocales(): array
     {
-        return ['uz', 'ru'];
+        return ['ru', 'uz'];
     }
 }

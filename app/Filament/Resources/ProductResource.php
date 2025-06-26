@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use Filament\Forms;
-use Filament\Resources\Concerns\Translatable;
 use Filament\Tables;
 use App\Models\Product;
 use Filament\Forms\Form;
@@ -24,6 +23,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Columns\BooleanColumn;
+use Filament\Resources\Concerns\Translatable;
 use App\Filament\Resources\ProductResource\Pages;
 use App\Filament\Resources\ProductResource\RelationManagers\ReviewsRelationManager;
 
@@ -147,8 +147,7 @@ class ProductResource extends Resource
                                     ->schema([
                                         FileUpload::make('image_url') // Если image_url - это путь к файлу
                                         ->label('Файл изображения')
-                                            ->image() // Указывает, что это изображение (для превью)
-                                            ->acceptedFileTypes(['jpeg', 'png', 'gif', 'webp'])
+                                            ->image()
                                             ->directory('product-images') // Директория для загрузки в storage/app/public
                                             ->visibility('public')
                                             ->nullable(),
@@ -226,7 +225,7 @@ class ProductResource extends Resource
 
                 TextColumn::make('price')
                     ->label('Цена')
-                    ->money('RUB', true) // Форматирование как деньги (RUB - код валюты)
+                    ->money('sum', true) // Форматирование как деньги (RUB - код валюты)
                     ->sortable(),
 
                 TextColumn::make('stock_quantity')

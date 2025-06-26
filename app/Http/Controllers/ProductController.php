@@ -33,6 +33,17 @@ class ProductController extends Controller
     {
         $product->loadMissing(['category', 'images', 'reviews.user', 'tags']);
 
+        $reviews = $product->reviews()->where('is_approved', true)->latest()->get();
+        $reviewsCount = $reviews->count();
+        $avgRating = $reviews->avg('rating');
+
+        $ratingDistribution = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
+        if ($reviewsCount > 0) {
+            $ratingGroups = $reviews->groupBy('rating');
+            foreach ($ratingGroups as $rating => $group) {
+                $ratingDistribution[$rating] = round(($group->count() / $reviewsCount) * 100);
+            }
+        }
         // Получаем похожие товары (например, из той же категории)
         $relatedProducts = Product::where('category_id', $product->category_id)
             ->where('id', '!=', $product->id) // Исключаем текущий товар
@@ -45,6 +56,10 @@ class ProductController extends Controller
         return view('components.product-show', [
             'product' => $product,
             'relatedProducts' => $relatedProducts,
+            'reviews' => $reviews, // Передаем отфильтрованные и отсортированные отзывы
+            'reviewsCount' => $reviewsCount,
+            'avgRating' => $avgRating,
+            'ratingDistribution' => $ratingDistribution
         ]);
     }
 }

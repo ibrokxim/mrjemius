@@ -1,13 +1,13 @@
 <!-- navbar -->
 <div class="border-bottom">
-    <div class="bg-light py-1">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6 col-12 text-center text-md-start"><span>Супер скидки - Экономьте больше с купонами</span></div>
-                {{-- ... остальная часть верхней плашки ... --}}
-            </div>
-        </div>
-    </div>
+{{--    <div class="bg-light py-1">--}}
+{{--        <div class="container">--}}
+{{--            <div class="row">--}}
+{{--                <div class="col-md-6 col-12 text-center text-md-start"><span>Супер скидки - Экономьте больше с купонами</span></div>--}}
+{{--                --}}{{-- ... остальная часть верхней плашки ... --}}
+{{--            </div>--}}
+{{--        </div>--}}
+{{--    </div>--}}
     <div class="py-5">
         <div class="container">
             <div class="row w-100 align-items-center gx-lg-2 gx-0">
@@ -48,22 +48,10 @@
                 </div>
                 <div class="col-md-2 col-xxl-3 d-none d-lg-block">
                     <!-- Button trigger modal -->
-
                 </div>
                 <div class="col-lg-2 col-xxl-2 text-end col-md-6 col-7">
                     <div class="list-inline">
-                        <div class="list-inline-item me-5">
-                            <a href="{{ route('wishlist.index') }}" class="text-muted position-relative">
-                                <i class="bi bi-heart"></i>
-                                @auth
-                                    @if(Auth::user()->wishlistProducts()->count() > 0)
-                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success" id="wishlist-counter">
-            {{ Auth::user()->wishlistProducts()->count() }}
-        </span>
-                                    @endif
-                                @endauth
-                            </a>
-                        </div>
+
                         <div class="list-inline-item me-5">
                             <a href="#!" class="text-muted" data-bs-toggle="modal" data-bs-target="#userModal">
                                 <svg
@@ -82,8 +70,48 @@
                                 </svg>
                             </a>
                         </div>
+                        <div class="list-inline-item me-5">
+                            @auth
+                                <a href="{{ route('wishlist.index') }}" class="text-muted position-relative" title="Ваши избранные">
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="20"
+                                        height="20"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        class="feather feather-heart">
+                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                    </svg>
+                                    @if(Auth::user()->wishlistProducts()->count() > 0)
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success" id="wishlist-counter">
+                                             {{ Auth::user()->wishlistProducts()->count() }}
+                                        </span>
+                                    @endif
+                                </a>
+                            @else
+                                <button type="button" class="btn btn-link text-muted p-0" data-bs-toggle="modal" data-bs-target="#userModal" title="Войдите через Telegram, чтобы использовать избранное">
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="20"
+                                        height="20"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        class="feather feather-heart">
+                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                                    </svg>
+                                </button>
+                            @endauth
+                        </div>
                         <div class="list-inline-item me-5 me-lg-0">
-                            <a class="text-muted position-relative" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" href="#offcanvasExample" role="button" aria-controls="offcanvasRight">
+                            <a class="text-muted position-relative"  data-bs-target="#offcanvasRight" href="{{ route('cart.index') }}"  aria-controls="offcanvasRight">
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     width="20"
@@ -100,13 +128,12 @@
                                     <path d="M16 10a4 4 0 0 1-8 0"></path>
                                 </svg>
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success">
-                                 1
-                                 <span class="visually-hidden">unread messages</span>
+
+                                 <span class="visually-hidden"> </span>
                               </span>
                             </a>
                         </div>
                         <div class="list-inline-item d-inline-block d-lg-none">
-                            <!-- Button -->
                             <button
                                 class="navbar-toggler collapsed"
                                 type="button"
@@ -129,7 +156,7 @@
         <div class="container">
             <div class="offcanvas offcanvas-start" tabindex="-1" id="navbar-default" aria-labelledby="navbar-defaultLabel">
                 <div class="offcanvas-header pb-1">
-                    <a href="{{route('welcome')}}"><img src="{{ asset('assets/images/logo/freshcart-logo.svg')}}" alt="eCommerce HTML Template" /></a>
+                    <a href="{{route('welcome')}}"><img src="{{ asset('assets/images/logo/logo.png')}}" style="height: 40px; width: auto;" alt=""/> </a>
                     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
                 </div>
                 <div class="offcanvas-body">
@@ -194,7 +221,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="dropdown me-3 d-none d-lg-block">
+                    <div class="dropdown me-3 d-none d-lg-block"  >
                         <button class="btn btn-primary px-6" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
                            <span class="me-1">
                               <svg
@@ -238,10 +265,10 @@
 {{--                                </ul>--}}
 {{--                            </li>--}}
                             <li class="nav-item dropdown w-100 w-lg-auto">
-                                <a class="nav-link " href="#" role="button"  aria-expanded="false">Контакты</a>
+                                <a class="nav-link " href="https://www.grechkafood.uz/" role="button"  aria-expanded="false">Правильное питание</a>
                             </li>
                             <li class="nav-item dropdown w-100 w-lg-auto">
-                                <a class="nav-link " href="https://www.grechkafood.uz/" role="button"  aria-expanded="false">Гречка</a>
+                                <a class="nav-link " href="{{route('contacts')}}" role="button"  aria-expanded="false">Контакты</a>
                             </li>
 
                         </ul>
@@ -251,5 +278,3 @@
         </div>
     </nav>
 </div>
-
-

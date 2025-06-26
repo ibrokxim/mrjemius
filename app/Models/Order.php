@@ -81,4 +81,6 @@ class Order extends Model
         return $this->belongsToMany(Promotion::class, 'order_promotion')
             ->withPivot('discount_applied');
     }
+
+
 }

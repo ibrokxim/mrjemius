@@ -83,6 +83,16 @@ class User extends Authenticatable
         return $this->belongsToMany(Product::class, 'wishlist_items');
     }
 
+    public function cartItems(): HasMany
+    {
+        return $this->hasMany(CartItem::class);
+    }
+
+    public function cartProducts()
+    {
+        return $this->belongsToMany(Product::class, 'cart_items');
+    }
+
     public function hasInWishlist(Product $product): bool
     {
         return $this->wishlistProducts()->where('product_id', $product->id)->exists();
