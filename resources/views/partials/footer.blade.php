@@ -8,7 +8,7 @@
                 <h6 class="mb-4">Контакты</h6>
                 <ul class="nav flex-column">
                     <li class="nav-item mb-3">
-                        <a href="tel:+998901884748" class="nav-link p-0 fs-5 fw-bold text-dark">+998 90 188 47 48</a>
+                        <a href="tel:+998771327700" class="nav-link p-0 fs-5 fw-bold text-dark">+998 77 132 77 00</a>
                     </li>
                     <li class="nav-item mb-3">
                         <a href="mailto:mrdjemiuszero.uz@gmail.com" class="nav-link p-0 text-muted">mrdjemiuszero.uz@gmail.com</a>
@@ -16,18 +16,18 @@
                 </ul>
                 <ul class="list-inline">
                     <li class="list-inline-item me-1">
-                        <a href="#!" class="btn btn-xs btn-social btn-icon">
+                        <a href="" class="btn btn-xs btn-social btn-icon">
                             {{-- SVG вашей иконки --}}
                             <i class="bi bi-facebook"></i>
                         </a>
                     </li>
                     <li class="list-inline-item me-1">
-                        <a href="#!" class="btn btn-xs btn-social btn-icon">
+                        <a href="https://t.me/mrdjemiuszerouz" class="btn btn-xs btn-social btn-icon">
                             <i class="bi bi-telegram"></i>
                         </a>
                     </li>
                     <li class="list-inline-item">
-                        <a href="#!" class="btn btn-xs btn-social btn-icon" aria-label="Instagram">
+                        <a href="https://www.instagram.com/mr.djemiuszero.uz" class="btn btn-xs btn-social btn-icon" aria-label="Instagram">
                             {{-- Замените SVG ниже на свой кастомный --}}
                             <i class="bi-instagram"></i>
                         </a>

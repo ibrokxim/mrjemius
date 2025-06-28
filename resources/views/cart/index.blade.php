@@ -1,17 +1,166 @@
 @extends('layouts.app')
-
 @section('title', 'Моя корзина')
+@push('styles')
+    <style>
+        /* Улучшение кнопок +/- в корзине */
+        .input-spinner {
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            overflow: hidden;
+            background: white;
+            max-width: 80px; /* Еще больше уменьшил */
+        }
+
+        .input-spinner .btn {
+            width: 22px; /* Сильно уменьшил */
+            height: 22px; /* Сильно уменьшил */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none !important;
+            border-radius: 0;
+            background: #f8f9fa;
+            color: #495057;
+            font-size: 12px; /* Еще меньше */
+            font-weight: bold;
+            line-height: 1;
+            padding: 0;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            min-width: 22px;
+        }
+
+        .input-spinner .btn:hover {
+            background: #e9ecef;
+            color: #212529;
+        }
+
+        .input-spinner .btn:active {
+            background: #dee2e6;
+        }
+
+        .input-spinner .form-input {
+            border: none !important;
+            background: white;
+            text-align: center;
+            font-weight: 600;
+            color: #212529;
+            width: 36px; /* Сильно уменьшил */
+            height: 22px; /* Сильно уменьшил */
+            margin: 0;
+            padding: 0 2px;
+            outline: none;
+            box-shadow: none;
+            flex-shrink: 0;
+            font-size: 11px; /* Еще меньше */
+        }
+
+        .input-spinner .form-input:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
+        /* Стили для кнопки удаления после суммы */
+        .delete-item-btn {
+            background: none;
+            border: none;
+            color: #6c757d;
+            padding: 4px;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            margin-left: 8px;
+        }
+
+        .delete-item-btn:hover {
+            color: #dc3545;
+        }
+
+        .delete-item-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Мобильная оптимизация */
+        @media (max-width: 576px) {
+            /* Улучшение отступов в строке товара корзины */
+            .list-group-item .row .col-3 {
+                padding-left: 8px;
+                padding-right: 8px;
+            }
+
+            /* Выравнивание цены */
+            .item-total-price {
+                font-size: 14px;
+                font-weight: 700;
+            }
+
+            /* Компактный размер для очень маленьких экранов */
+            .input-spinner {
+                max-width: 70px; /* Еще меньше для мобильных */
+            }
+
+            .input-spinner .btn {
+                width: 20px; /* Еще меньше для мобильных */
+                height: 20px;
+                font-size: 10px;
+                min-width: 20px;
+            }
+
+            .input-spinner .form-input {
+                height: 20px;
+                width: 30px;
+                font-size: 10px;
+                padding: 0 1px;
+            }
+
+            .delete-item-btn svg {
+                width: 16px;
+                height: 16px;
+            }
+        }
+
+        /* Для планшетов */
+        @media (min-width: 577px) and (max-width: 991px) {
+            .input-spinner .btn {
+                width: 21px;
+                height: 21px;
+                font-size: 11px;
+                min-width: 21px;
+            }
+
+            .input-spinner .form-input {
+                height: 21px;
+                width: 34px;
+                font-size: 11px;
+            }
+        }
+
+        /* Дополнительные стили для лучшего вида */
+        .cart-item-remove-btn {
+            font-size: 13px;
+            color: #6c757d;
+            transition: color 0.2s ease;
+        }
+
+        .cart-item-remove-btn:hover {
+            color: #dc3545;
+        }
+
+        .cart-item-remove-btn svg {
+            width: 12px;
+            height: 12px;
+        }
+    </style>
+@endpush
 
 @section('content')
     <main>
-        <!-- section-->
         <div class="mt-4">
             <div class="container">
-                <!-- row -->
                 <div class="row">
-                    <!-- col -->
                     <div class="col-12">
-                        <!-- breadcrumb -->
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb mb-0">
                                 <li class="breadcrumb-item"><a href="{{ route('welcome') }}">Главная</a></li>
@@ -22,32 +171,28 @@
                 </div>
             </div>
         </div>
-        <!-- section -->
+
         <section class="mb-lg-14 mb-8 mt-8">
             <div class="container">
-                <!-- row -->
                 <div class="row">
                     <div class="col-12">
-                        <!-- card -->
                         <div class="card py-1 border-0 mb-8">
                             <div>
                                 <h1 class="fw-bold">Моя корзина</h1>
-                                {{-- Динамическое количество товаров --}}
-                                <p class="mb-0">В вашей корзине {{ $cartItems->sum('quantity') }} товар(ов).</p>
+                                <p class="mb-0">В вашей корзине {{ count($cartItems) }} {{ \Str::plural('товар', count($cartItems), ['товар', 'товара', 'товаров']) }}</p>
                             </div>
                         </div>
                     </div>
                 </div>
-                <!-- row -->
+
                 @if($cartItems->isNotEmpty())
                     <div class="row">
                         <div class="col-lg-8 col-md-7">
                             <div class="py-3">
-                                <!-- alert -->
                                 @if($subtotal >= $freeShippingThreshold)
                                     <div class="alert alert-success p-2" role="alert">
                                         У вас БЕСПЛАТНАЯ доставка!
-                                        <a href="{{ route('checkout') }}" class="alert-link">Перейти к оформлению!</a>
+                                        <a href="{{ route('checkout.index') }}" class="alert-link">Перейти к оформлению</a>
                                     </div>
                                 @elseif($subtotal > 0)
                                     <div class="alert alert-info p-2" role="alert">
@@ -69,57 +214,51 @@
                                                                 <h6 class="mb-0">{{ $item->product->name }}</h6>
                                                             </a>
                                                             <span>
-                                                                <small class="text-muted">
-                                                                    Цена: {{ number_format($item->product->sell_price ?? $item->product->price, 0, '.', ' ') }} сум.
-                                                                </small>
-                                                            </span>
-                                                            <!-- remove -->
-                                                            <div class="mt-2 small lh-1">
-                                                                <button class="btn btn-link text-decoration-none text-inherit p-0 border-0 cart-item-remove-btn"
-                                                                        data-item-id="{{ $item->id }}">
-                                                                    <span class="me-1 align-text-bottom">
-                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-trash-2 text-success">
-                                                                            <polyline points="3 6 5 6 21 6"></polyline>
-                                                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                                                            <line x1="10" y1="11" x2="10" y2="17"></line>
-                                                                            <line x1="14" y1="11" x2="14" y2="17"></line>
-                                                                        </svg>
-                                                                    </span>
-                                                                    <span class="text-muted">Удалить</span>
-                                                                </button>
-                                                            </div>
+<small class="text-muted">
+Цена: {{ number_format($item->product->sell_price ?? $item->product->price, 0, '.', ' ') }} сум.
+</small>
+</span>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <!-- input group -->
-                                                <div class="col-3 col-md-3 col-lg-3"> <!-- Изменил col-4 на col-3 для лучшего выравнивания -->
+                                                <div class="col-3 col-md-3 col-lg-3">
                                                     <div class="input-group input-spinner cart-item-quantity-control" data-item-id="{{ $item->id }}">
                                                         <button type="button" class="button-minus btn btn-sm border" data-field="quantity">-</button>
                                                         <input type="number" step="1" max="{{ $item->product->stock_quantity }}" value="{{ $item->quantity }}" name="quantity"
-                                                               class="quantity-field form-control-sm form-input w-50 text-center border-start-0 border-end-0 cart-item-quantity-input"
-                                                               readonly> {{-- readonly, чтобы менять только кнопками или JS --}}
+                                                               class="quantity-field form-control-sm form-input text-center border-start-0 border-end-0 cart-item-quantity-input"
+                                                               readonly>
                                                         <button type="button" class="button-plus btn btn-sm border" data-field="quantity">+</button>
                                                     </div>
                                                 </div>
                                                 <!-- price -->
-                                                <div class="col-3 col-md-3 col-lg-2 text-lg-end text-start text-md-end"> <!-- Изменил col-2 на col-3 -->
-                                                    <span class="fw-bold text-dark item-total-price" data-item-id="{{ $item->id }}">
-                                                        {{ number_format(($item->product->sell_price ?? $item->product->price) * $item->quantity, 0, '.', ' ') }} сум
-                                                    </span>
-                                                    @if($item->product->sell_price && $item->product->sell_price < $item->product->price)
-                                                        <div class="text-decoration-line-through text-muted small">
-                                                            {{ number_format($item->product->price * $item->quantity, 0, '.', ' ') }} сум
-                                                        </div>
-                                                    @endif
+                                                <div class="col-3 col-md-3 col-lg-2 text-lg-end text-start text-md-end d-flex align-items-center justify-content-end">
+                                                    <div class="text-end">
+<span class="fw-bold text-dark item-total-price" data-item-id="{{ $item->id }}">
+{{ number_format(($item->product->sell_price ?? $item->product->price) * $item->quantity, 0, '.', ' ') }} сум
+</span>
+                                                        @if($item->product->sell_price && $item->product->sell_price < $item->product->price)
+                                                            <div class="text-decoration-line-through text-muted small">
+                                                                {{ number_format($item->product->price * $item->quantity, 0, '.', ' ') }} сум
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                    <button class="delete-item-btn cart-item-remove-btn" data-item-id="{{ $item->id }}" title="Удалить товар">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                            <polyline points="3 6 5 6 21 6"></polyline>
+                                                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                                                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                                                        </svg>
+                                                    </button>
                                                 </div>
                                             </div>
                                         </li>
                                     @endforeach
                                 </ul>
-                                <!-- btn -->
+
                                 <div class="d-flex justify-content-between mt-4">
                                     <a href="{{ route('welcome') }}" class="btn btn-primary">Продолжить покупки</a>
-                                    {{-- <a href="#!" class="btn btn-dark">Update Cart</a> --}} {{-- Кнопка Update Cart обычно нужна, если нет AJAX --}}
                                     <form action="{{ route('cart.clear') }}" method="POST" id="clearCartForm" class="d-inline">
                                         @csrf
                                         <button type="submit" class="btn btn-outline-danger">Очистить корзину</button>
@@ -137,16 +276,22 @@
                                         <ul class="list-group list-group-flush">
                                             <li class="list-group-item d-flex justify-content-between align-items-start">
                                                 <div class="me-auto">
-                                                    <div>Промежуточный итог</div>
+                                                    <div>Сумма товаров</div>
                                                 </div>
                                                 <span id="summary-subtotal">{{ number_format($subtotal, 0, '.', ' ') }} сум</span>
                                             </li>
-                                            {{-- <li class="list-group-item d-flex justify-content-between align-items-start">
+                                            <li class="list-group-item d-flex justify-content-between align-items-start">
                                                 <div class="me-auto">
-                                                    <div>Service Fee</div>
+                                                    <div>Доставка</div>
                                                 </div>
-                                                <span id="summary-service-fee">{{ number_format($serviceFee, 0, '.', ' ') }} сум</span>
-                                            </li> --}}
+                                                <span id="summary-shipping">
+@if($subtotal >= $freeShippingThreshold)
+                                                        <span class="text-success">Бесплатно</span>
+                                                    @else
+                                                        {{ number_format(config('cart.shipping_cost', 15000), 0, '.', ' ') }} сум
+                                                    @endif
+</span>
+                                            </li>
                                             <li class="list-group-item d-flex justify-content-between align-items-start">
                                                 <div class="me-auto">
                                                     <div class="fw-bold">Итого</div>
@@ -156,13 +301,15 @@
                                         </ul>
                                     </div>
                                     <div class="d-grid mb-1 mt-4">
-                                        <a href="#" class="btn btn-primary btn-lg d-flex justify-content-between align-items-center">
-                                            Перейти к оформлению
+                                        <button class="btn btn-primary btn-lg d-flex justify-content-between align-items-center"
+                                                onclick="window.location.href='{{ route('checkout.index') }}'">
+                                            <span>Перейти к оформлению</span>
                                             <span class="fw-bold" id="checkout-total-btn">{{ number_format($total, 0, '.', ' ') }} сум</span>
-                                        </a>
+                                        </button>
                                     </div>
                                     <p><small>Размещая заказ, вы соглашаетесь с <a href="#!">Условиями обслуживания</a> и <a href="#!">Политикой конфиденциальности</a>.</small></p>
-                                    {{-- Промокод можно оставить как есть, его логика будет отдельной --}}
+
+                                    {{-- Промокод --}}
                                     <div class="mt-8">
                                         <h2 class="h5 mb-3">Промокод или подарочная карта</h2>
                                         <form>
@@ -200,7 +347,6 @@
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
             function showAlert(type, message) {
-                // ... ваш код showAlert ...
                 const alertContainer = document.createElement('div');
                 alertContainer.className = `alert alert-${type} alert-dismissible fade show m-3`;
                 alertContainer.style.position = 'fixed';
@@ -213,7 +359,7 @@
                 setTimeout(() => { bootstrap.Alert.getOrCreateInstance(alertContainer).close(); }, 5000);
             }
 
-            // AJAX запрос для обновления/удаления
+// AJAX запрос для обновления/удаления
             async function updateCartAjax(url, method, body = null) {
                 try {
                     const headers = {
@@ -235,15 +381,9 @@
                     if (response.ok && data.success) {
                         showAlert('success', data.message);
                         // Обновляем страницу для отображения изменений с сервера
-                        // Это самый простой способ после AJAX действия на странице корзины
                         window.location.reload();
                     } else {
                         showAlert('danger', data.message || 'Произошла ошибка');
-                        // Если была ошибка валидации количества, сервер может вернуть 400/422
-                        if(response.status === 400 || response.status === 422) {
-                            // Можно попытаться восстановить предыдущее значение инпута, но проще перезагрузить
-                            // window.location.reload();
-                        }
                     }
                 } catch (error) {
                     console.error('Ошибка AJAX запроса:', error);
@@ -251,7 +391,7 @@
                 }
             }
 
-            // Обработчики для изменения количества
+// Обработчики для изменения количества
             document.querySelectorAll('.cart-item-quantity-control').forEach(control => {
                 const itemId = control.dataset.itemId;
                 const input = control.querySelector('.quantity-field');
@@ -260,7 +400,7 @@
                 const stockMax = parseInt(input.getAttribute('max'));
 
                 async function sendUpdate(quantity) {
-                    const url = `{{ url('cart/update') }}/${itemId}`; // Используем url() для простоты, замените на route() если нужно
+                    const url = `{{ url('cart/update') }}/${itemId}`;
                     await updateCartAjax(url, 'PATCH', { quantity: quantity });
                 }
 
@@ -281,23 +421,20 @@
                         showAlert('warning', 'Достигнуто максимальное количество на складе.');
                     }
                 });
-
-                // Можно добавить обработчик на input.addEventListener('change', ...)
-                // но с кнопками +/- UX часто лучше
             });
 
-            // Обработчики для удаления товара
+// Обработчики для удаления товара
             document.querySelectorAll('.cart-item-remove-btn').forEach(button => {
                 button.addEventListener('click', async function() {
                     if (confirm('Вы уверены, что хотите удалить этот товар из корзины?')) {
                         const itemId = this.dataset.itemId;
-                        const url = `{{ url('cart/remove') }}/${itemId}`; // Используем url()
+                        const url = `{{ url('cart/remove') }}/${itemId}`;
                         await updateCartAjax(url, 'DELETE');
                     }
                 });
             });
 
-            // Очистка корзины
+// Очистка корзины
             const clearCartForm = document.getElementById('clearCartForm');
             if(clearCartForm) {
                 clearCartForm.addEventListener('submit', async function(e) {
@@ -309,10 +446,8 @@
                 });
             }
 
-            // Обработчики для кнопок "Добавить в корзину" со страниц каталога/товара
-            // Код из вашего предыдущего JS для addToCartButtons
+// Обработчики для кнопок "Добавить в корзину" со страниц каталога/товара
             document.querySelectorAll('.add-to-cart-btn').forEach(button => {
-                // Убедимся, что это не кнопки ВНУТРИ страницы корзины (они уже обработаны)
                 if (!button.closest('.cart-item-quantity-control')) {
                     button.addEventListener('click', async function(e) {
                         e.preventDefault();
@@ -350,8 +485,6 @@
                                 if (offcanvasCartEl) {
                                     const offcanvasInstance = bootstrap.Offcanvas.getInstance(offcanvasCartEl) || new bootstrap.Offcanvas(offcanvasCartEl);
                                     offcanvasInstance.show();
-                                    // При открытии offcanvas данные там должны быть свежими (серверный рендеринг)
-                                    // или вы можете вызвать здесь функцию для AJAX обновления содержимого offcanvas, если хотите
                                 }
                             } else {
                                 showAlert('danger', data.message || 'Не удалось добавить товар.');

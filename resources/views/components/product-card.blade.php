@@ -59,16 +59,16 @@
                 @if($product->sell_price && $product->sell_price < $product->price)
                     {{-- Сначала обычная цена, перечеркнутая и меньше размером --}}
                     <div class="original-price text-muted text-decoration-line-through" style="font-size: 0.85em; line-height: 1;">
-                        {{ number_format($product->price) }} сум
+                        {{ number_format($product->price,  0, '', ' ') }} сум
                     </div>
                     {{-- Потом скидочная цена, крупнее и жирнее --}}
                     <div class="sale-price fs-5 fw-bold text-dark" style="line-height: 1.2;">
-                        {{ number_format($product->sell_price) }} сум
+                        {{ number_format($product->sell_price,  0, '', ' ') }} сум
                     </div>
                 @else
                     {{-- Если скидки нет, просто обычная цена --}}
                     <div class="regular-price fs-5 fw-bold text-dark">
-                        {{ number_format($product->price) }} сум
+                        {{ number_format($product->price, 0, '', ' ') }} сум
                     </div>
                 @endif
             </div>
@@ -83,7 +83,7 @@
                         @php
                             $productInCart = Auth::user()->cartItems()->where('product_id', $product->id)->exists();
                         @endphp
-                        <button class="btn {{ $productInCart ? 'btn-success' : 'btn-primary' }} add-to-cart-btn stop-propagation"
+                        <button class="btn {{ $productInCart ? 'btn-success' : 'btn-primary' }} add-to-cart-btn d-flex align-items-center justify-content-center text-nowrap"
                                 data-product-id="{{ $product->id }}"
                                 data-product-name="{{ $product->name }}"
                                 data-product-price="{{ $product->sell_price ?? $product->price }}"

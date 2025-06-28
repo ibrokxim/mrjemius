@@ -77,4 +77,12 @@ class ProductService
         return $this->productRepository->search($searchData, $perPage);
     }
 
+    public function getPopularProductsWithPagination(int $perPage = 5)
+    {
+        // Ваша логика для определения популярности (например, по просмотрам или заказам)
+        return Product::where('is_active', true)
+            // ->orderBy('views', 'desc')
+            ->paginate($perPage);
+    }
+
 }

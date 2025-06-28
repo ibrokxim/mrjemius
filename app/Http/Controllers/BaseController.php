@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\CategoryService;
+use App\Models\Banner;
+use App\Models\Product;
+use Illuminate\Http\Request;
 use App\Services\ProductService;
+use App\Services\CategoryService;
 
 class BaseController extends Controller
 {
@@ -13,17 +16,45 @@ class BaseController extends Controller
     ) {}
     public function returnWelcomePage()
     {
-
-        $categories = $this->categoryService->getCategoriesForMainPage(10); // Пример метода
-        $popularProducts = $this->productService->getAllProducts(); // Пример метода
+        $categories = $this->categoryService->getCategoriesForMainPage(10);
+        $popularProducts = $this->productService->getAllProducts();
         $bestsellerProducts = $this->productService->getBestSellerProducts(8);
-        $banners = \App\Models\Banner::where('is_active', 1)->get();
+        $banners = Banner::where('is_active', 1)->get();
         return view('welcome', compact('categories','banners', 'popularProducts', 'bestsellerProducts'));
+    }
+
+    public function loadMorePopularProducts(Request $request)
+    {
+        $perPage = $request->input('per_page', 5);
+        $products = $this->productService->getPopularProductsWithPagination($perPage);
+        return response()->json([
+            'html' => view('partials.product_cards_grid', ['products' => $products])->render(),
+            'hasMorePages' => $products->hasMorePages(),
+            'currentPage' => $products->currentPage(),
+            'totalPages' => $products->lastPage()
+        ]);
     }
     public function index()
     {
         return view('welcome');
     }
+
+//    public function loadMorePopularProducts(Request $request)
+//    {
+//        $perPage = 5; // Сколько товаров загружать за один раз по клику на кнопку
+//
+//        $products = $this->productService->getPopularProductsWithPagination($perPage);
+//
+//        if ($products->isEmpty()) {
+//            return response()->json(['html' => '', 'hasMore' => false]);
+//        }
+//
+//        $html = view('partials.product_cards_grid', ['products' => $products])->render();
+//        return response()->json([
+//            'html' => $html,
+//            'hasMore' => $products->hasMorePages()
+//        ]);
+//    }
 
     public function footer()
     {

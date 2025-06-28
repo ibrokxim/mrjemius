@@ -11,8 +11,18 @@
                 <div class="col-12">
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb mb-0">
+                            {{-- Ссылка на главную страницу --}}
                             <li class="breadcrumb-item"><a href="{{ route('welcome') }}">Главная</a></li>
-                            <li class="breadcrumb-item"><a href="{{-- {{ route('catalog.index') }} --}}#!">Каталог</a></li>
+
+                            {{-- Ссылка на общий каталог (если есть такая страница) --}}
+                            <li class="breadcrumb-item"><a href="#">Каталог</a></li>
+
+                            {{-- Здесь можно добавить цикл для родительских категорий, если у вас есть вложенность --}}
+                            @if ($category->parent)
+                                 <li class="breadcrumb-item"><a href="{{ route('category.show', $category->parent->slug) }}">{{ $category->parent->name }}</a></li>
+                            @endif
+
+                            {{-- Текущая категория (не кликабельна) --}}
                             <li class="breadcrumb-item active" aria-current="page">{{ $category->name }}</li>
                         </ol>
                     </nav>
@@ -63,8 +73,8 @@
                             </div>
                             <div class="d-md-flex justify-content-between align-items-center">
                                 <div class="d-flex align-items-center justify-content-between">
-                                    <div class="ms-2 d-lg-none">
-                                        <a class="btn btn-outline-gray-400 text-muted" data-bs-toggle="offcanvas" href="#offcanvasCategory" role="button" aria-controls="offcanvasCategory">
+                                    <div class="ms-2 d-lg-none w-100 ">
+                                        <a class="btn btn-outline-gray-400 text-muted d-flex align-items-center justify-content-center" data-bs-toggle="offcanvas" href="#offcanvasCategory" role="button" aria-controls="offcanvasCategory">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-filter me-2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
                                             Фильтры
                                         </a>
@@ -125,43 +135,142 @@
         </div>
     </div>
 @endsection
-
 @push('scripts')
-    {{-- Скрипты для слайдера цен и других элементов этой страницы --}}
-    <script src="{{ asset('assets/libs/nouislider/dist/nouislider.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/wnumb/wNumb.min.js') }}"></script>
+    {{-- Скрипт для автоматической отправки формы сортировки (оставляем его) --}}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            var priceRange = document.getElementById('priceRange');
-            if (priceRange) {
-                var priceMinInput = document.getElementById('price_from');
-                var priceMaxInput = document.getElementById('price_to');
-                var priceRangeValue = document.getElementById('priceRange-value');
-
-                var startMin = parseInt(priceMinInput.value) || 0;
-                var startMax = parseInt(priceMaxInput.value) || 10000;
-
-                noUiSlider.create(priceRange, {
-                    start: [startMin, startMax],
-                    connect: true,
-                    range: { 'min': 0, 'max': 10000 },
-                    step: 100,
-                    format: wNumb({ decimals: 0 })
-                });
-
-                priceRange.noUiSlider.on('update', function (values, handle) {
-                    var formattedValues = [
-                        wNumb({decimals: 0, thousand: ' '}).to(parseInt(values[0])),
-                        wNumb({decimals: 0, thousand: ' '}).to(parseInt(values[1]))
-                    ];
-                    priceRangeValue.innerHTML = formattedValues.join(' - ') + ' ₽';
-                });
-
-                priceRange.noUiSlider.on('change', function (values, handle) {
-                    priceMinInput.value = values[0];
-                    priceMaxInput.value = values[1];
+            const form = document.getElementById('filters-form');
+            if (form) {
+                form.querySelectorAll('select[name="sort"], select[name="per_page"]').forEach(select => {
+                    select.addEventListener('change', function() {
+                        form.submit();
+                    });
                 });
             }
         });
     </script>
+
+    {{-- НОВЫЙ БЛОК ДЛЯ КОРЗИНЫ И ИЗБРАННОГО --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            // --- 1. Обработчик для кнопки "В КОРЗИНУ" ---
+            document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+                button.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const currentButton = this;
+                    const productId = currentButton.dataset.productId;
+                    const btnText = currentButton.querySelector('.btn-text');
+                    const spinner = currentButton.querySelector('.spinner-border');
+
+                    currentButton.disabled = true;
+                    if (btnText) btnText.classList.add('d-none');
+                    if (spinner) spinner.classList.remove('d-none');
+
+                    try {
+                        const urlTemplate = "{{ route('cart.add', ['product' => ':productId']) }}";
+                        const finalUrl = urlTemplate.replace(':productId', productId);
+
+                        const response = await fetch(finalUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({ quantity: 1 })
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok && data.success) {
+                            currentButton.classList.remove('btn-primary');
+                            currentButton.classList.add('btn-success');
+                            if (btnText) btnText.textContent = 'В корзине';
+
+                            // Обновляем счетчик в шапке
+                            updateCartCount(data.cart_count);
+                        } else {
+                            currentButton.disabled = false;
+                        }
+                    } catch (error) {
+                        console.error('Ошибка при добавлении в корзину:', error);
+                        currentButton.disabled = false;
+                    } finally {
+                        if (spinner) spinner.classList.add('d-none');
+                        if (btnText) {
+                            btnText.classList.remove('d-none');
+                            // Если кнопка не стала "В корзине", возвращаем исходный текст
+                            if (!currentButton.classList.contains('btn-success')) {
+                                btnText.textContent = 'В корзину';
+                            }
+                        }
+                    }
+                });
+            });
+
+            // --- 2. Обработчик для кнопки "В ИЗБРАННОЕ" ---
+            document.querySelectorAll('.wishlist-toggle-btn').forEach(button => {
+                button.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const currentButton = this;
+                    const productId = currentButton.dataset.productId;
+                    const icon = currentButton.querySelector('i');
+
+                    currentButton.disabled = true;
+
+                    try {
+                        const urlTemplate = "{{ route('wishlist.toggle', ['product' => ':productId']) }}";
+                        const finalUrl = urlTemplate.replace(':productId', productId);
+
+                        const response = await fetch(finalUrl, {
+                            method: 'POST',
+                            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken }
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok && data.success) {
+                            if (data.status === 'added') {
+                                currentButton.classList.add('active', 'text-danger');
+                                currentButton.title = 'Убрать из избранного';
+                                if (icon) icon.className = 'bi bi-heart-fill';
+                            } else {
+                                currentButton.classList.remove('active', 'text-danger');
+                                currentButton.title = 'В избранное';
+                                if (icon) icon.className = 'bi bi-heart';
+                            }
+                        } else {
+                            // Возвращаем иконку в исходное состояние при ошибке
+                            if (icon) icon.className = currentButton.classList.contains('active') ? 'bi bi-heart-fill' : 'bi bi-heart';
+                        }
+                    } catch (error) {
+                        console.error('Ошибка при обновлении избранного:', error);
+                        if (icon) icon.className = currentButton.classList.contains('active') ? 'bi bi-heart-fill' : 'bi bi-heart';
+                    } finally {
+                        currentButton.disabled = false;
+                    }
+                });
+            });
+
+            // --- 3. Вспомогательная функция для обновления счетчика в шапке ---
+            function updateCartCount(count) {
+                const cartCountElement = document.getElementById('cart-count');
+                if (cartCountElement) {
+                    cartCountElement.textContent = count;
+                    if (count > 0 && cartCountElement.style.display === 'none') {
+                        cartCountElement.style.display = 'inline-block';
+                    } else if (count === 0) {
+                        cartCountElement.style.display = 'none';
+                    }
+                }
+            }
+        });
+    </script>
 @endpush
+

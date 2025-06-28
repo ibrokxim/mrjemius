@@ -42,6 +42,8 @@ class UserResource extends Resource
                     ->maxLength(255),
                 TextInput::make('telegram_username')
                     ->maxLength(255),
+                TextInput::make('telegram_id')
+                    ->maxLength(255),
                 TextInput::make('telegram_first_name')
                     ->maxLength(255),
                 TextInput::make('telegram_last_name')

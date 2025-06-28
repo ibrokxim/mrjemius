@@ -87,9 +87,8 @@ class ProductResource extends Resource
                                             ->columnSpanFull() // На всю ширину
                                             ->nullable(),
 
-                                        Textarea::make('short_description')
+                                        Forms\Components\RichEditor::make('short_description')
                                             ->label('Состав')
-                                            ->maxLength(500)
                                             ->columnSpanFull()
                                             ->nullable(),
 
@@ -132,11 +131,35 @@ class ProductResource extends Resource
                                             ->label('Рекомендуемый'),
                                     ]),
 
-                                KeyValue::make('attributes') // Для JSON поля attributes
-                                ->label('Дополнительные атрибуты')
+                                KeyValue::make('attributes')
+                                    ->label('Дополнительные атрибуты(основные аттрибуты: ккал, белки, жиры, углеводы)')
                                     ->keyLabel('Название атрибута')
                                     ->valueLabel('Значение атрибута')
-                                    ->columnSpanFull(),
+                                    ->reorderable()
+                                    ->columnSpanFull()
+                                    ->afterStateHydrated(function (KeyValue $component, $state) {
+                                        // Если состояние пустое или null, устанавливаем дефолтные значения
+                                        if (empty($state) || is_null($state)) {
+                                            $component->state([
+                                                'Вес, г' => '',
+                                                'Белки' => '',
+                                                'Жиры' => '',
+                                                'Углеводы' => '',
+                                                'Энергетическая ценность' => '',
+                                                'Пищевые волокна' => '',
+                                                'Ккал' => '',
+                                            ]);
+                                        }
+                                    })
+                                    ->default([
+                                        'Вес, г' => '',
+                                        'Белки' => '',
+                                        'Жиры' => '',
+                                        'Углеводы' => '',
+                                        'Энергетическая ценность' => '',
+                                        'Пищевые волокна' => '',
+                                        'Ккал' => '',
+                                    ]),
                             ]),
 
                         Tabs\Tab::make('Изображения')

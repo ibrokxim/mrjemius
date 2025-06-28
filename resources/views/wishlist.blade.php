@@ -62,10 +62,10 @@
                                             </td>
                                             <td class="align-middle">
                                                 @if($product->sale_price && $product->sale_price < $product->price)
-                                                    <span class="text-dark">{{ number_format($product->sale_price, 0, '.', ' ') }} ₽</span>
-                                                    <span class="text-decoration-line-through text-muted ms-1">{{ number_format($product->price, 0, '.', ' ') }} ₽</span>
+                                                    <span class="text-dark">{{ number_format($product->sale_price, 0, '.', ' ') }} </span>
+                                                    <span class="text-decoration-line-through text-muted ms-1">{{ number_format($product->price, 0, '.', ' ') }} </span>
                                                 @else
-                                                    <span class="text-dark">{{ number_format($product->price, 0, '.', ' ') }} ₽</span>
+                                                    <span class="text-dark">{{ number_format($product->price, 0, '.', ' ') }} </span>
                                                 @endif
                                             </td>
                                             <td class="align-middle">
@@ -108,3 +108,142 @@
         </section>
     </main>
 @endsection
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            // --- 1. Обработчик для удаления из избранного (кнопка с корзиной) ---
+            document.querySelectorAll('.wishlist-toggle-btn').forEach(button => {
+                button.addEventListener('click', async function() {
+                    const productId = this.dataset.productId;
+                    const row = document.getElementById(`wishlist-row-${productId}`);
+
+                    const urlTemplate = "{{ route('wishlist.toggle', ['product' => ':productId']) }}";
+                    const finalUrl = urlTemplate.replace(':productId', productId);
+
+                    try {
+                        const response = await fetch(finalUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            }
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok && data.success) {
+                            console.log(data.message);
+                            // Плавно удаляем строку из таблицы
+                            if (row) {
+                                row.style.transition = 'opacity 0.5s ease';
+                                row.style.opacity = '0';
+                                setTimeout(() => row.remove(), 500);
+                            }
+                            // Здесь можно также обновить счетчик товаров в "p"
+                        } else {
+                            console.error('Ошибка при удалении из избранного:', data.message);
+                        }
+                    } catch (error) {
+                        console.error('Критическая ошибка:', error);
+                    }
+                });
+            });
+
+            // --- 2. Обработчик для добавления ОДНОГО товара в корзину ---
+            document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+                button.addEventListener('click', async function() {
+                    const currentButton = this;
+                    const productId = currentButton.dataset.productId;
+                    const urlTemplate = "{{ route('cart.add', ['product' => ':productId']) }}";
+                    const finalUrl = urlTemplate.replace(':productId', productId);
+
+                    currentButton.disabled = true;
+                    currentButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+
+                    try {
+                        const response = await fetch(finalUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: JSON.stringify({ quantity: 1 })
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok && data.success) {
+                            console.log(data.message);
+                            currentButton.classList.remove('btn-primary');
+                            currentButton.classList.add('btn-success');
+                            currentButton.innerHTML = 'В корзине';
+                            // Динамическое обновление счетчика в шапке
+                            updateCartCount(data.cart_count);
+                        } else {
+                            console.error('Ошибка при добавлении в корзину:', data.message);
+                            currentButton.disabled = false;
+                            currentButton.innerHTML = 'В корзину';
+                        }
+                    } catch (error) {
+                        console.error('Критическая ошибка:', error);
+                        currentButton.disabled = false;
+                        currentButton.innerHTML = 'В корзину';
+                    }
+                });
+            });
+
+            // --- 3. Обработчик для кнопки "Все в корзину" ---
+            const moveAllToCartBtn = document.getElementById('moveAllToCartBtn');
+            if (moveAllToCartBtn) {
+                moveAllToCartBtn.addEventListener('click', async function() {
+                    const currentButton = this;
+                    const url = "{{ route('cart.move.from.wishlist') }}";
+
+                    currentButton.disabled = true;
+                    currentButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Перемещаем...';
+
+                    try {
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken
+                            }
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok && data.success) {
+                            console.log(data.message);
+                            // Перезагружаем страницу, чтобы показать изменения (пустой список желаний и обновленную корзину)
+                            window.location.reload();
+                        } else {
+                            console.error('Ошибка при перемещении:', data.message);
+                            currentButton.disabled = false;
+                            currentButton.innerHTML = '<i class="bi bi-cart-plus me-2"></i>Все в корзину';
+                        }
+                    } catch (error) {
+                        console.error('Критическая ошибка:', error);
+                        currentButton.disabled = false;
+                        currentButton.innerHTML = '<i class="bi bi-cart-plus me-2"></i>Все в корзину';
+                    }
+                });
+            }
+
+            // --- Вспомогательная функция для обновления счетчика в шапке ---
+            function updateCartCount(count) {
+                const cartCountElement = document.getElementById('cart-count');
+                if (cartCountElement) {
+                    cartCountElement.textContent = count;
+                    if (count > 0) {
+                        cartCountElement.style.display = 'inline-block';
+                    } else {
+                        cartCountElement.style.display = 'none';
+                    }
+                }
+            }
+        });
+    </script>
+@endpush

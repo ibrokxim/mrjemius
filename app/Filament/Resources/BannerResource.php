@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Forms\Components\Fieldset;
+use Filament\Forms\Components\Select;
 use Filament\Tables;
 use App\Models\Banner;
 use Filament\Forms\Form;
@@ -66,7 +68,21 @@ class BannerResource extends Resource
                             ->visibility('public')
                             ->nullable()
                             ->afterStateUpdated(fn ($state) => \Log::info('Загружен файл:', ['state' => $state])),
+                        Fieldset::make('Размеры изображения (необязательно)')
+                            ->schema([
+                                TextInput::make('width')
+                                    ->label('Ширина (в пикселях)')
+                                    ->numeric()
+                                    ->suffix('px') // Добавляет "px" после поля для наглядности
+                                    ->nullable(),
 
+                                TextInput::make('height')
+                                    ->label('Высота (в пикселях)')
+                                    ->numeric()
+                                    ->suffix('px')
+                                    ->nullable(),
+                            ])
+                            ->columns(2),
                         Toggle::make('is_active')
                             ->label('Активен')
                             ->default(true),

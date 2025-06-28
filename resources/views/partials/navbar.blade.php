@@ -127,10 +127,11 @@
                                     <line x1="3" y1="6" x2="21" y2="6"></line>
                                     <path d="M16 10a4 4 0 0 1-8 0"></path>
                                 </svg>
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success">
-
-                                 <span class="visually-hidden"> </span>
-                              </span>
+                                @if(auth()->check() && auth()->user()->cartProducts()->count() > 0)
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success" id="wishlist-counter">
+                                        {{ auth()->user()->cartProducts()->count() }}
+                                    </span>
+                                @endif
                             </a>
                         </div>
                         <div class="list-inline-item d-inline-block d-lg-none">
@@ -252,25 +253,17 @@
                     <div>
                         <ul class="navbar-nav align-items-center">
                             <li class="nav-item dropdown w-100 w-lg-auto">
-                                <a class="nav-link " href="#" role="button"  aria-expanded="false">Продукты</a>
+                                <a class="nav-link " href="{{ route('welcome') }}#products-section" role="button"  aria-expanded="false">Продукты</a>
                             </li>
                             <li class="nav-item dropdown w-100 w-lg-auto">
                                 <a class="nav-link " href="{{ route('blog.index') }}" role="button"  aria-expanded="false">Полезные советы</a>
                             </li>
-
-{{--                            <li class="nav-item dropdown w-100 w-lg-auto">--}}
-{{--                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Информация</a>--}}
-{{--                                <ul class="dropdown-menu">--}}
-{{--                                    <li><a class="dropdown-item" href="pages/shop-grid.html">Shop Grid - Filter</a></li>--}}
-{{--                                </ul>--}}
-{{--                            </li>--}}
                             <li class="nav-item dropdown w-100 w-lg-auto">
                                 <a class="nav-link " href="https://www.grechkafood.uz/" role="button"  aria-expanded="false">Правильное питание</a>
                             </li>
                             <li class="nav-item dropdown w-100 w-lg-auto">
                                 <a class="nav-link " href="{{route('contacts')}}" role="button"  aria-expanded="false">Контакты</a>
                             </li>
-
                         </ul>
                     </div>
                 </div>

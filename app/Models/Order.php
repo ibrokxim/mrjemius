@@ -69,7 +69,6 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
-    // Loyalty points transactions, related with order
     public function loyaltyPointsTransactions(): HasMany
     {
         return $this->hasMany(LoyaltyPointsTransaction::class);

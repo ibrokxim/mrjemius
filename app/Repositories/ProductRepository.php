@@ -42,38 +42,45 @@ class ProductRepository extends CoreRepository implements ProductRepositoryInter
         $query = $this->startConditions()
             ->where('category_id', $categoryId)
             ->where('is_active', true)
-            ->with('primaryImage', 'category');
+            ->with('primaryImage', 'category')
+            ->withAvg('reviews', 'rating');
 
         // --- ЛОГИКА ФИЛЬТРАЦИИ ---
         if (!empty($filters['price_from'])) {
             $query->where('price', '>=', $filters['price_from']);
         }
         if (!empty($filters['price_to'])) {
-            $query->where('price', '=<', $filters['price_to']);
+            $query->where('price', '<=', $filters['price_to']);
         }
 
         // Фильтр по рейтингу (предполагаем, что у вас есть поле `rating` в таблице `products`)
         if (!empty($filters['rating'])) {
             $query->having('reviews_avg_rating', '>=', (int)$filters['rating']);
         }
+        $sortColumn = 'created_at';
+        $sortDirection = 'desc';
 
         // --- ЛОГИКА СОРТИРОВКИ ---
         if (!empty($sortBy)) {
-            foreach ($sortBy as $column => $direction) {
-                // Если сортировка по рейтингу, используем вычисленное поле
-                if ($column === 'rating') {
-                    $column = 'reviews_avg_rating';
-                }
+            // Предполагаем, что sortBy - это массив ['column' => 'direction']
+            $column = key($sortBy);
+            $direction = current($sortBy);
 
-                if (in_array($column, ['price', 'reviews_avg_rating', 'created_at', 'name'])) {
-                    $query->orderBy($column, $direction);
-                }
+            // Если сортировка по рейтингу, используем наш вычисленный столбец
+            if ($column === 'rating') {
+                $column = 'reviews_avg_rating';
             }
-        } else {
-            $query->orderBy('created_at', 'desc');
+
+            // Проверяем, что столбец разрешен для сортировки
+            if (in_array($column, ['price', 'reviews_avg_rating', 'created_at'])) {
+                $sortColumn = $column;
+                $sortDirection = in_array(strtolower($direction), ['asc', 'desc']) ? $direction : 'desc';
+            }
         }
 
-        return $query->paginate($perPage)->withQueryString(); // withQueryString() сохранит параметры фильтра в ссылках пагинации
+        $query->orderBy($sortColumn, $sortDirection);
+
+        return $query->paginate($perPage);// withQueryString() сохранит параметры фильтра в ссылках пагинации
     }
 
     public function search(array $searchData, int $perPage = 12): LengthAwarePaginator

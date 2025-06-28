@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
-    <!-- Required meta tags -->
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta content="Codescandy" name="author" />
     <title>@yield('title', 'Mr. Djemius Zero')</title>
-
-    <!-- Libs CSS -->
+    {{-- Внутри <head> --}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
     <link href="{{ asset('assets/libs/slick-carousel/slick/slick.css') }}" rel="stylesheet" />
     <link href="{{ asset('assets/libs/slick-carousel/slick/slick-theme.css') }}" rel="stylesheet" />
     <link href="{{ asset('assets/libs/tiny-slider/dist/tiny-slider.css') }}" rel="stylesheet" />
@@ -16,7 +15,6 @@
     <link href="{{ asset('assets/libs/feather-webfont/dist/feather-icons.css') }}" rel="stylesheet" />
     <link href="{{ asset('assets/libs/simplebar/dist/simplebar.min.css') }}" rel="stylesheet" />
 
-    <!-- Favicon icon-->
     <link rel="shortcut icon" type="image/x-icon" href="{{ asset('assets/images/favicon/favicon.ico') }}" />
 
     <!-- Theme CSS -->
@@ -51,17 +49,19 @@
 <script src="{{ asset('assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ asset('assets/libs/simplebar/dist/simplebar.min.js') }}"></script>
 <!-- Theme JS -->
-<script src="{{ asset('assets/js/theme.min.js') }}"></script>
+
 {{-- Скрипты для слайдеров и других вендоров --}}
 <script src="{{ asset('assets/js/vendors/jquery.min.js') }}"></script>
+<script src="{{ asset('assets/libs/tiny-slider/dist/min/tiny-slider.js') }}"></script>
+<script src="{{ asset('assets/js/vendors/tns-slider.js') }}"></script>
+
+<script src="{{ asset('assets/js/vendors/zoom.js') }}"></script>
 <script src="{{ asset('assets/js/vendors/countdown.js') }}"></script>
 <script src="{{ asset('assets/libs/slick-carousel/slick/slick.min.js') }}"></script>
 <script src="{{ asset('assets/js/vendors/slick-slider.js') }}"></script>
-<script src="{{ asset('assets/libs/tiny-slider/dist/min/tiny-slider.js') }}"></script>
-<script src="{{ asset('assets/js/vendors/tns-slider.js') }}"></script>
-<script src="{{ asset('assets/js/vendors/zoom.js') }}"></script>
 <script src="{{ asset('assets/js/vendors/validation.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
 @stack('scripts')
-
+<script src="{{ asset('assets/js/theme.min.js') }}"></script>
 </body>
 </html>

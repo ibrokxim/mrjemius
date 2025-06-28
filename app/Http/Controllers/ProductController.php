@@ -36,6 +36,31 @@ class ProductController extends Controller
         $reviews = $product->reviews()->where('is_approved', true)->latest()->get();
         $reviewsCount = $reviews->count();
         $avgRating = $reviews->avg('rating');
+        // --- НОВАЯ ЛОГИКА ДЛЯ АТРИБУТОВ ---
+        $allAttributes = (array)$product->attributes;
+
+        // Ключевые слова для summary-блока
+        $keySpecKeywords = ['ккал', 'белки', 'жиры', 'углеводы'];
+
+        $keySpecs = [];
+        $otherSpecs = [];
+
+        foreach ($allAttributes as $name => $value) {
+            $found = false;
+            // Проверяем, содержит ли название атрибута одно из ключевых слов
+            foreach ($keySpecKeywords as $keyword) {
+                if (mb_stripos($name, $keyword) !== false) {
+                    // Если нашли, добавляем в ключевые и переходим к следующему атрибуту
+                    $keySpecs[$name] = $value;
+                    $found = true;
+                    break;
+                }
+            }
+            // Если ключевое слово не найдено, добавляем в "остальные"
+            if (!$found) {
+                $otherSpecs[$name] = $value;
+            }
+        }
 
         $ratingDistribution = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
         if ($reviewsCount > 0) {
@@ -59,7 +84,30 @@ class ProductController extends Controller
             'reviews' => $reviews, // Передаем отфильтрованные и отсортированные отзывы
             'reviewsCount' => $reviewsCount,
             'avgRating' => $avgRating,
-            'ratingDistribution' => $ratingDistribution
+            'ratingDistribution' => $ratingDistribution,
+            'allAttributes' => $allAttributes,
+        ]);
+    }
+
+    public function loadMorePopularProducts(Request $request)
+    {
+        $page = $request->input('page', 2);
+        $perPage = 5;
+
+        $products = $this->productService->getPaginatedPopularProducts($perPage, $page);
+
+        // Проверяем, есть ли вообще товары для загрузки
+        if ($products->isEmpty()) {
+            return response()->json(['html' => '', 'hasMore' => false]);
+        }
+
+        // Рендерим HTML только для новых карточек
+        $html = view('partials.product_cards_grid', ['products' => $products])->render();
+
+        // Возвращаем HTML и флаг, есть ли еще страницы
+        return response()->json([
+            'html' => $html,
+            'hasMore' => $products->hasMorePages()
         ]);
     }
 }

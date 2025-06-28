@@ -22,6 +22,9 @@ class Banner extends Model
         'end_date',
         'is_active',
         'slug',
+        'size',
+        'width',
+        'height',
     ];
 
     protected $casts = [

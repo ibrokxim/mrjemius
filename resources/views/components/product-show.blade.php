@@ -1,20 +1,55 @@
 @extends('layouts.app')
+@push('styles')
+    <style>
 
-{{-- Устанавливаем заголовок страницы, используя SEO-данные или название продукта --}}
-@section('title', $product->seo->meta_title ?? $product->name)
+        /* Стиль для GLightbox, чтобы стрелки были видны */
+        .product-specs-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
 
-@push('head-scripts')
-    {{-- Добавляем Schema.org разметку для продукта --}}
-{{--    @include('partials.seo.product-schema', ['product' => $product])--}}
+        .product-specs-table td {
+            vertical-align: middle;
+            padding: 0.3rem 0;
+        }
+
+        .product-specs-table .spec-name {
+            white-space: nowrap;
+            padding-right: 0.5rem;
+        }
+
+        .product-specs-table .spec-value {
+            white-space: nowrap;
+            padding-left: 0.5rem;
+            text-align: right;
+            font-weight: 500;
+        }
+
+        .product-specs-table .spec-dots {
+            width: 100%;
+            position: relative;
+        }
+
+        .product-specs-table .spec-dots::before {
+            content: '';
+            display: block;
+            border-bottom: 1px dotted #ccc;
+            width: 100%;
+            height: 1px;
+            position: relative;
+            top: 0.5em;
+        }
+
+    </style>
 @endpush
 
+@section('title', $product->seo->meta_title ?? $product->name)
 @section('content')
     <main>
         <div class="mt-4">
             <div class="container">
                 <div class="row">
                     <div class="col-12">
-                        <!-- breadcrumb -->
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb mb-0">
                                 <li class="breadcrumb-item"><a href="{{ route('welcome') }}">Главная</a></li>
@@ -32,15 +67,22 @@
             <div class="container">
                 <div class="row">
                     <div class="col-md-5 col-xl-6">
-                        {{-- Слайдер изображений продукта --}}
                         @if($product->images->isNotEmpty())
                             <div class="product" id="product">
                                 @foreach($product->images as $image)
-                                    <div class="zoom" onmousemove="zoom(event)" style="background-image: url({{ asset('storage/' . $image->image_url) }})">
-                                        <img src="{{ asset('storage/' . $image->image_url) }}" alt="{{ $image->alt_text ?? $product->name }}" />
+                                    <div>
+                                        {{-- Оборачиваем изображение в ссылку для GLightbox --}}
+                                        <a href="{{ asset('storage/' . $image->image_url) }}" class="glightbox" data-gallery="product-gallery">
+                                            <img src="{{ asset('storage/' . $image->image_url) }}"
+                                                 alt="{{ $image->alt_text ?? $product->name }}"
+                                                 style="width: 100%; height: auto; object-fit: contain; max-height: 500px;"
+                                            />
+                                        </a>
                                     </div>
                                 @endforeach
                             </div>
+
+                            <!-- Миниатюры для навигации слайдера (горизонтальные) -->
                             <div class="product-tools">
                                 <div class="thumbnails row g-3" id="productThumbnails">
                                     @foreach($product->images as $image)
@@ -52,8 +94,12 @@
                                     @endforeach
                                 </div>
                             </div>
+
                         @elseif($product->primaryImage)
-                            <img src="{{ asset('storage/' . $product->primaryImage->image_url) }}" alt="{{ $product->name }}" class="img-fluid rounded" />
+                            {{-- Случай с одним изображением --}}
+                            <a href="{{ asset('storage/' . $product->primaryImage->image_url) }}" class="glightbox" data-gallery="product-gallery">
+                                <img src="{{ asset('storage/' . $product->primaryImage->image_url) }}" alt="{{ $product->name }}" class="img-fluid rounded" />
+                            </a>
                         @else
                             <img src="{{ asset('assets/images/placeholder.png') }}" alt="Нет изображения" class="img-fluid rounded" />
                         @endif
@@ -64,104 +110,128 @@
                                 <a href="{{ route('category.show', $product->category->slug) }}" class="mb-4 d-block">{{ $product->category->name }}</a>
                             @endif
                             <h1 class="mb-1">{{ $product->name }}</h1>
-                            <div class="mb-4">
-                                {{-- Рейтинг --}}
-                                @if($product->reviews_avg_rating)
+                            <div class="mb-4 d-flex align-items-center">
+                                {!! $product->stock_quantity > 0 ? '<span class="text-success me-3">В наличии</span>' : '<span class="text-danger me-3">Нет в наличии</span>' !!}
+                                @if($reviewsCount > 0)
                                     <small class="text-warning">
-                                        @for ($i = 1; $i <= 5; $i++)
-                                            <i class="bi bi-star{{ $i <= round($product->reviews_avg_rating) ? '-fill' : '' }}"></i>
-                                        @endfor
+                                        @for ($i = 1; $i <= 5; $i++)<i class="bi bi-star{{ $i <= round($avgRating) ? '-fill' : '' }}"></i>@endfor
                                     </small>
-                                    <a href="#reviews-tab" class="ms-2">({{ $product->reviews_count }} отзыва(ов))</a>
+                                    <a href="#reviews-tab-pane" class="ms-2 text-muted">({{ $reviewsCount }} {{ trans_choice('отзыв|отзыва|отзывов', $reviewsCount) }})</a>
                                 @else
                                     <small class="text-muted">Нет отзывов</small>
                                 @endif
-
                             </div>
                             <div class="fs-4">
-                                {{-- Цена --}}
-                                <span class="fw-bold text-dark">{{ number_format($product->sale_price ?? $product->price, 2, '.', ' ') }} ₽</span>
+                                <span class="fw-bold text-dark">{{ number_format($product->sale_price ?? $product->price,  0, '', ' ') }} сум</span>
                                 @if($product->sale_price && $product->sale_price < $product->price)
-                                    <span class="text-decoration-line-through text-muted">{{ number_format($product->price, 2, '.', ' ') }} ₽</span>
+                                    <span class="text-decoration-line-through text-muted ms-1">{{ number_format($product->price,  0, '', ' ') }} сум</span>
                                 @endif
                             </div>
-                            <hr class="my-6" />
-                            <div class="mb-5">
 
-                                {{-- Здесь будет логика для вариантов товара, если они есть --}}
-                                {{-- <button type="button" class="btn btn-outline-secondary">250г</button> --}}
-                            </div>
-                            <div>
-                                <div class="input-group input-spinner">
-                                    <input type="button" value="-" class="button-minus btn btn-sm" data-field="quantity" />
-                                    <input type="number" step="1" max="{{ $product->stock_quantity }}" value="1" name="quantity" class="quantity-field form-control-sm form-input" />
-                                    <input type="button" value="+" class="button-plus btn btn-sm" data-field="quantity" />
-                                </div>
-                            </div>
-                            <div class="mt-3 row justify-content-start g-2 align-items-center">
-                                <div class="col-xxl-4 col-lg-4 col-md-5 col-5 d-grid">
-                                    <button type="button" class="btn btn-primary add-to-cart-btn" data-product-id="{{ $product->id }}">
-                                        <i class="feather-icon icon-shopping-bag me-2"></i>В корзину
-                                    </button>
-                                </div>
-                                {{-- ... кнопки сравнения, избранного ... --}}
-                            </div>
                             <hr class="my-6" />
-                            <div>
-                                <table class="table table-borderless mb-0">
-                                    <tbody>
-                                    <tr>
-                                        <td>Код товара:</td>
-                                        <td>{{ $product->sku ?? 'N/A' }}</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Наличие:</td>
-                                        <td>{!! $product->stock_quantity > 0 ? '<span class="text-success">В наличии</span>' : '<span class="text-danger">Нет в наличии</span>' !!}</td>
-                                    </tr>
-                                    @if($product->category)
-                                        <tr>
-                                            <td>Тип:</td>
-                                            <td>{{ $product->category->name }}</td>
-                                        </tr>
-                                    @endif
-                                    <tr>
-                                        <td>Доставка:</td>
-                                        <td><small>1-2 дня. <span class="text-muted">(Бесплатный самовывоз)</span></small></td>
-                                    </tr>
-                                    </tbody>
-                                </table>
+
+                            {{-- БЛОК С КОРЗИНОЙ И КОЛИЧЕСТВОМ (теперь здесь) --}}
+                            <div class="d-flex align-items-stretch gap-2 mb-4">
+                                <div class="input-group input-spinner" style="width: auto;">
+                                    <button type="button" class="button-minus btn btn-outline-secondary h-100" data-field="quantity">-</button>
+                                    <input type="number" step="1" max="{{ $product->stock_quantity }}" value="1" name="quantity" class="quantity-field form-control-sm form-input text-center" style="width: 60px;">
+                                    <button type="button" class="button-plus btn btn-outline-secondary h-100" data-field="quantity">+</button>
+                                </div>
+                                <div class="flex-grow-1">
+                                    @auth
+                                        {{-- ЕСЛИ ПОЛЬЗОВАТЕЛЬ АВТОРИЗОВАН --}}
+                                        {{-- Проверяем, есть ли товар уже в корзине --}}
+                                        @php
+                                            $productInCart = auth()->user()->cartItems()->where('product_id', $product->id)->exists();
+                                        @endphp
+                                        <button type="button" class="btn {{ $productInCart ? 'btn-success' : 'btn-primary' }} w-100 h-100 add-to-cart-btn"
+                                                data-product-id="{{ $product->id }}"
+                                            {{ $productInCart ? 'disabled' : '' }}>
+                                            <i class="feather-icon icon-shopping-bag me-2"></i>
+                                            <span class="btn-text">{{ $productInCart ? 'В корзине' : 'В корзину' }}</span>
+                                            <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                        </button>
+                                    @else
+                                        {{-- ЕСЛИ ПОЛЬЗОВАТЕЛЬ ГОСТЬ --}}
+                                        <button type="button" class="btn btn-primary w-100 h-100" data-bs-toggle="modal" data-bs-target="#userModal">
+                                            <i class="feather-icon icon-shopping-bag me-2"></i>В корзину
+                                        </button>
+                                    @endauth
+                                </div>
+
+                                <div class="dropdown">
+                                    <a class="btn btn-outline-secondary h-100 d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Поделиться">
+                                        <i class="feather-icon icon-share-2"></i>
+                                    </a>
+                                    <ul class="dropdown-menu">
+
+                                        <li>
+                                            <a class="dropdown-item" id="telegram-share-link" href="#" target="_blank">
+                                                <i class="bi bi-telegram me-2"></i>Telegram
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" id="whatsapp-share-link" href="#" target="_blank">
+                                                <i class="bi bi-whatsapp me-2"></i>WhatsApp
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <hr class="my-6" />
+
+                            {{-- БЛОК С ХАРАКТЕРИСТИКАМИ (теперь здесь) --}}
+                            @if(!empty($allAttributes))
+                                @php
+                                    // Ключевые слова для summary-блока
+                                    $keySpecKeywords = ['ккал', 'белки', 'жиры', 'углеводы'];
+                                    $keySpecs = [];
+                                    // Находим ключевые характеристики
+                                    foreach ($allAttributes as $name => $value) {
+                                        foreach ($keySpecKeywords as $keyword) {
+                                            if (mb_stripos($name, $keyword) !== false) {
+                                                $keySpecs[strtolower($keyword)] = ['name' => $name, 'value' => $value];
+                                                break;
+                                            }
+                                        }
+                                    }
+                                @endphp
+
+                                <h4 class="mb-3">Пищевая ценность на 100г продукта</h4>
+
+                                {{-- Краткий summary-блок ("квадрат") --}}
+                                <div class="p-3 border rounded-3 bg-light d-flex justify-content-around text-center flex-wrap gap-3">
+                                    @foreach (['ккал', 'белки', 'жиры', 'углеводы'] as $keyword)
+                                        @if(isset($keySpecs[$keyword]))
+                                            <div>
+                                                <div class="fw-bold fs-4">{{ $keySpecs[$keyword]['value'] }}</div>
+                                                <div class="small text-muted">{{ $keyword }}</div>
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+
+                                {{-- Детальная таблица (выводим первые 5 из ВСЕХ атрибутов) --}}
                                 <div class="mt-4">
-                                    <div class="dropdown">
-                                        <a class="btn btn-outline-secondary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="feather-icon icon-share-2 me-2"></i> Поделиться
-                                        </a>
-
-                                        <ul class="dropdown-menu">
-                                            <li>
-                                                <a class="dropdown-item" href="#!" id="web-share-button">
-                                                    <i class="bi bi-phone me-2"></i>Через меню телефона
-                                                </a>
-                                            </li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li>
-                                                <a class="dropdown-item" id="telegram-share-link" href="#" target="_blank">
-                                                    <i class="bi bi-telegram me-2"></i>Telegram
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a class="dropdown-item" id="whatsapp-share-link" href="#" target="_blank">
-                                                    <i class="bi bi-whatsapp me-2"></i>WhatsApp
-                                                </a>
-                                            </li>
-                                            <li>
-                                                <a class="dropdown-item" id="vk-share-link" href="#" target="_blank">
-                                                    <i class="bi bi-vk me-2"></i>VKontakte
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
+                                    <h4 class="mb-3">Характеристики</h4>
+                                    <table class="product-specs-table">
+                                        <tbody>
+                                        @foreach(array_slice($allAttributes, 0, 5, true) as $name => $value)
+                                            <tr>
+                                                <td class="spec-name">{{ $name }}</td>
+                                                <td class="spec-dots"></td>
+                                                <td class="spec-value">{{ $value }}</td>
+                                            </tr>
+                                        @endforeach
+                                        </tbody>
+                                    </table>
+                                    {{-- Ссылка для показа всех характеристик (если их больше 5) --}}
+                                    @if(count($allAttributes) > 5)
+                                        <a href="#all-specs-tab-pane" class="text-decoration-none" id="show-all-specs-link">Все характеристики</a>
+                                    @endif
                                 </div>
-                            </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -187,6 +257,12 @@
                                     Описание
                                 </button>
                             </li>
+
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="all-specs-tab" data-bs-toggle="tab" data-bs-target="#all-specs-tab-pane" type="button" role="tab" aria-controls="all-specs-tab-pane" aria-selected="false">
+                                        Все характеристики
+                                    </button>
+                                </li>
                             {{-- Вкладка "Доставка" --}}
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="delivery-tab" data-bs-toggle="tab" data-bs-target="#delivery-tab-pane" type="button" role="tab" aria-controls="delivery-tab-pane" aria-selected="false">
@@ -229,6 +305,21 @@
                                     @else
                                         <p class="text-muted">Описание для этого продукта пока не добавлено.</p>
                                     @endif
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade" id="all-specs-tab-pane" role="tabpanel" aria-labelledby="all-specs-tab" tabindex="0">
+                                <div class="my-8">
+                                    <table class="table table-bordered table-striped">
+                                        <tbody>
+                                        @foreach($allAttributes as $name => $value)
+                                            <tr>
+                                                <td class="fw-medium">{{ $name }}</td>
+                                                <td class="text-end">{{ $value }}</td>
+                                            </tr>
+                                        @endforeach
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
 
@@ -292,97 +383,227 @@
 @endsection
 
 @push('scripts')
-    {{-- Скрипты для слайдера изображений, зума и т.д. --}}
     <script src="{{ asset('assets/libs/tiny-slider/dist/min/tiny-slider.js') }}"></script>
     <script src="{{ asset('assets/js/vendors/tns-slider.js') }}"></script>
     <script src="{{ asset('assets/js/vendors/zoom.js') }}"></script>
 @endpush
 @push('scripts')
-    {{-- ... ваши другие скрипты для этой страницы (слайдеры и т.д.) ... --}}
+    {{-- Подключаем GLightbox, так как он нужен для этой страницы --}}
+    <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // --- Данные для "Поделиться" ---
-            const shareTitle = "{{ e($product->name) }}"; // Название продукта
-            const shareUrl = "{{ url()->current() }}"; // URL текущей страницы
-            const shareText = "Посмотрите, какой отличный продукт я нашел: {{ e($product->name) }}";
+        document.addEventListener('DOMContentLoaded', function () {
+            // =================================================================
+            // ИНИЦИАЛИЗАЦИЯ ПЛАГИНОВ И СТАТИЧЕСКИХ ЭЛЕМЕНТОВ
+            // =================================================================
 
-            // --- Настройка ссылок для соцсетей ---
+            // 1. Инициализация Tiny Slider (для галереи)
+            if (document.querySelector('#product') && document.querySelector('#productThumbnails')) {
+                try {
+                    var slider = tns({
+                        container: '#product',
+                        items: 1,
+                        autoplay: false,
+                        controls: false,
+                        navContainer: "#productThumbnails",
+                        navAsThumbnails: true,
+                    });
+                } catch (error) { console.error('Ошибка Tiny Slider:', error); }
+            }
+
+            // 2. Инициализация GLightbox (для попапа)
+            if (typeof GLightbox !== 'undefined') {
+                try {
+                    const lightbox = GLightbox({ selector: '.glightbox', loop: true });
+                } catch (error) { console.error('Ошибка GLightbox:', error); }
+            }
+
+            // 3. Обработчик для ссылки "Все характеристики"
+            const showAllSpecsLink = document.getElementById('show-all-specs-link');
+            if (showAllSpecsLink) {
+                showAllSpecsLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const tabTrigger = document.getElementById('all-specs-tab');
+                    if (tabTrigger) {
+                        new bootstrap.Tab(tabTrigger).show();
+                        document.getElementById('myTab').scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            }
+
+            // 4. Обработчик для формы отзыва
+            const writeReviewBtn = document.getElementById('write-review-btn');
+            const reviewFormContainer = document.getElementById('review-form-container');
+            if (writeReviewBtn && reviewFormContainer) {
+                writeReviewBtn.addEventListener('click', function() {
+                    if (reviewFormContainer.style.display === 'none') {
+                        reviewFormContainer.style.display = 'block';
+                        this.innerText = 'Скрыть форму';
+                    } else {
+                        reviewFormContainer.style.display = 'none';
+                        this.innerText = 'Написать отзыв';
+                    }
+                });
+                // Показываем форму, если были ошибки валидации
+                @if($errors->any())
+                    reviewFormContainer.style.display = 'block';
+                writeReviewBtn.innerText = 'Скрыть форму';
+                @endif
+            }
+
+            // 5. Обработчик для кнопок +/- счетчика основного товара
+            const mainQuantitySpinner = document.querySelector('.col-md-7 .input-spinner');
+            if(mainQuantitySpinner) {
+                const minusBtn = mainQuantitySpinner.querySelector('.button-minus');
+                const plusBtn = mainQuantitySpinner.querySelector('.button-plus');
+                const quantityInput = mainQuantitySpinner.querySelector('.quantity-field');
+                if (minusBtn && plusBtn && quantityInput) {
+                    minusBtn.addEventListener('click', () => {
+                        let val = parseInt(quantityInput.value);
+                        if (val > 1) quantityInput.value = val - 1;
+                    });
+                    plusBtn.addEventListener('click', () => {
+                        let val = parseInt(quantityInput.value);
+                        let max = parseInt(quantityInput.max);
+                        if (val < max) quantityInput.value = val + 1;
+                    });
+                }
+            }
+
+
+            // =================================================================
+            // ДЕЛЕГИРОВАНИЕ СОБЫТИЙ ДЛЯ ДИНАМИЧЕСКИХ ЭЛЕМЕНТОВ
+            // =================================================================
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            if (!csrfToken) {
+                console.error('CSRF-токен не найден!');
+                return;
+            }
+
+            // Вешаем один "умный" обработчик на весь `main` тег
+            document.querySelector('main').addEventListener('click', async function(event) {
+                const target = event.target;
+
+                // --- Логика для кнопки "В ИЗБРАННОЕ" (работает везде) ---
+                const wishlistBtn = target.closest('.wishlist-toggle-btn');
+                if (wishlistBtn) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    toggleWishlist(wishlistBtn);
+                    return;
+                }
+
+                // --- Логика для кнопки "В КОРЗИНУ" (работает везде) ---
+                const cartBtn = target.closest('.add-to-cart-btn');
+                if (cartBtn) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    addToCart(cartBtn);
+                    return;
+                }
+            });
+
+
+            // =================================================================
+            // ФУНКЦИИ-ОБРАБОТЧИКИ
+            // =================================================================
+
+            async function toggleWishlist(button) {
+                const productId = button.dataset.productId;
+                const icon = button.querySelector('i');
+                if (!productId || !icon) return;
+
+                button.disabled = true;
+                try {
+                    const urlTemplate = "{{ route('wishlist.toggle', ['product' => ':id']) }}";
+                    const finalUrl = urlTemplate.replace(':id', productId);
+                    const response = await fetch(finalUrl, {
+                        method: 'POST',
+                        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken }
+                    });
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        if (data.status === 'added') {
+                            button.classList.add('active', 'text-danger');
+                            icon.className = 'bi bi-heart-fill';
+                        } else {
+                            button.classList.remove('active', 'text-danger');
+                            icon.className = 'bi bi-heart';
+                        }
+                    }
+                } catch (error) {
+                    console.error('Wishlist toggle error:', error);
+                } finally {
+                    button.disabled = false;
+                }
+            }
+
+            async function addToCart(button) {
+                const productId = button.dataset.productId;
+                const btnText = button.querySelector('.btn-text');
+                const spinner = button.querySelector('.spinner-border');
+                if (!productId) return;
+
+                let quantity = 1; // По умолчанию 1 товар (для карточек в "похожих")
+                // Если это основная кнопка, берем количество из ее счетчика
+                if (button.closest('.col-md-7')) {
+                    const quantityInput = document.querySelector('input[name="quantity"]');
+                    if (quantityInput) quantity = quantityInput.value;
+                }
+
+                button.disabled = true;
+                if (btnText) btnText.style.display = 'none';
+                if (spinner) spinner.classList.remove('d-none');
+
+                try {
+                    const urlTemplate = "{{ route('cart.add', ['product' => ':id']) }}";
+                    const finalUrl = urlTemplate.replace(':id', productId);
+                    const response = await fetch(finalUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken },
+                        body: JSON.stringify({ quantity: quantity })
+                    });
+                    const data = await response.json();
+                    if (response.ok && data.success) {
+                        button.classList.remove('btn-primary');
+                        button.classList.add('btn-success');
+                        if (btnText) btnText.textContent = 'В корзине';
+                        updateCartCount(data.cart_count);
+                    } else {
+                        button.disabled = false;
+                    }
+                } catch (error) {
+                    console.error('Add to cart error:', error);
+                    button.disabled = false;
+                } finally {
+                    if (spinner) spinner.classList.add('d-none');
+                    if (btnText) btnText.style.display = 'inline-block';
+                }
+            }
+
+            function updateCartCount(count) {
+                const cartCountElement = document.getElementById('cart-count');
+                if (cartCountElement && count !== undefined) {
+                    cartCountElement.textContent = count;
+                    cartCountElement.style.display = count > 0 ? 'inline-block' : 'none';
+                }
+            }
+
+            // =================================================================
+            // ЛОГИКА ДЛЯ КНОПКИ "ПОДЕЛИТЬСЯ"
+            // =================================================================
+            const shareTitle = "{{ e($product->name) }}";
+            const shareUrl = "{{ url()->current() }}";
+            const shareText = "Посмотрите, какой отличный продукт я нашел: {{ e($product->name) }}";
             const telegramLink = document.getElementById('telegram-share-link');
             if (telegramLink) {
                 telegramLink.href = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
             }
-
             const whatsappLink = document.getElementById('whatsapp-share-link');
             if (whatsappLink) {
                 whatsappLink.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
             }
-
-            const vkLink = document.getElementById('vk-share-link');
-            if(vkLink) {
-                vkLink.href = `http://vk.com/share.php?url=${encodeURIComponent(shareUrl)}&title=${encodeURIComponent(shareTitle)}`;
-            }
-
-            // --- Логика для Web Share API ---
-            const webShareButton = document.getElementById('web-share-button');
-            // Проверяем, поддерживает ли браузер Web Share API
-            if (navigator.share) {
-                webShareButton.style.display = 'block'; // Показываем кнопку
-                webShareButton.addEventListener('click', async () => {
-                    try {
-                        await navigator.share({
-                            title: shareTitle,
-                            text: shareText,
-                            url: shareUrl,
-                        });
-                        console.log('Контент успешно отправлен');
-                    } catch (err) {
-                        console.error('Ошибка при отправке:', err);
-                    }
-                });
-            } else {
-                // Если API не поддерживается, скрываем кнопку
-                webShareButton.style.display = 'none';
-                // Также можно скрыть разделитель
-                const divider = webShareButton.nextElementSibling;
-                if (divider && divider.tagName === 'HR') {
-                    divider.style.display = 'none';
-                }
-            }
+            // ... и так далее для других соцсетей ...
         });
     </script>
-    @push('scripts')
-        {{-- ... ваши другие скрипты ... --}}
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const writeReviewBtn = document.getElementById('write-review-btn');
-                const reviewFormContainer = document.getElementById('review-form-container');
-
-                if (writeReviewBtn && reviewFormContainer) {
-                    writeReviewBtn.addEventListener('click', function() {
-                        // Плавно показываем/скрываем форму
-                        if (reviewFormContainer.style.display === 'none') {
-                            reviewFormContainer.style.display = 'block';
-                            this.innerText = 'Скрыть форму';
-                        } else {
-                            reviewFormContainer.style.display = 'none';
-                            this.innerText = 'Написать отзыв';
-                        }
-                    });
-                }
-
-                // Если были ошибки валидации при отправке формы,
-                // то после перезагрузки страницы форма должна быть сразу видна.
-                @if($errors->any())
-                if (reviewFormContainer) {
-                    reviewFormContainer.style.display = 'block';
-                    if (writeReviewBtn) {
-                        writeReviewBtn.innerText = 'Скрыть форму';
-                    }
-                }
-                @endif
-
-            });
-        </script>
-    @endpush
 @endpush
