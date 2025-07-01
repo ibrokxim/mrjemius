@@ -7,6 +7,7 @@
     <meta content="Codescandy" name="author" />
     <title>@yield('title', 'Mr. Djemius Zero')</title>
     {{-- Внутри <head> --}}
+
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
     <link href="{{ asset('assets/libs/slick-carousel/slick/slick.css') }}" rel="stylesheet" />
     <link href="{{ asset('assets/libs/slick-carousel/slick/slick-theme.css') }}" rel="stylesheet" />
@@ -19,7 +20,7 @@
 
     <!-- Theme CSS -->
     <link rel="stylesheet" href="{{ asset('assets/css/theme.min.css') }}" />
-
+    <script src="//code.jivo.ru/widget/UgOFHdeQxC" async></script>
     {{-- Скрипты аналитики --}}
 {{--    @include('partials.analytics')--}}
 

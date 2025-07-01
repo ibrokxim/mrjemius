@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CartItem;
 use App\Models\Product;
 use App\Models\WishlistItem;
+use App\Services\CartService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -14,52 +15,28 @@ use Illuminate\Support\Facades\Session;
 
 class CartController extends Controller
 {
-    /**
-     * Отображение корзины
-     */
+     protected $cartService;
+
+    public function __construct(CartService $cartService)
+    {
+        $this->cartService = $cartService;
+    }
     public function index()
     {
-        if (Auth::check()) {
-            $cartItems = CartItem::with(['product', 'product.primaryImage']) // Загружаем изображение
-            ->where('user_id', Auth::id())
-                ->orderBy('created_at', 'desc') // Или по другому полю
-                ->get();
-        } else {
-            $sessionId = Session::getId();
-            $cartItems = CartItem::with(['product', 'product.primaryImage'])
-                ->where('session_id', $sessionId)
-                ->whereNull('user_id')
-                ->orderBy('created_at', 'desc')
-                ->get();
-        }
+        $cartSummary = $this->cartService->getSummary();
 
-        $subtotal = $cartItems->sum(function ($item) {
-            $price = $item->product->sell_price ?? $item->product->price;
-            return $price * $item->quantity;
-        });
-
-        // Пример расчета других сумм, если нужно
-        $serviceFee = 3000; // Пример, сумов (замените на вашу логику)
-        $total = $subtotal + $serviceFee; // Или $subtotal, если нет доп. сборов
-
-        // Для сообщения о доставке
-        $freeShippingThreshold = 500000; // Ваш порог
-        $needsForFreeShipping = $freeShippingThreshold - $subtotal > 0 ? $freeShippingThreshold - $subtotal : 0;
-
-
-        return view('cart.index', [ // Убедитесь, что имя файла cart.index.blade.php
-            'cartItems' => $cartItems,
-            'subtotal' => $subtotal,
-            'serviceFee' => $serviceFee, // Если есть
-            'total' => $total,
-            'needsForFreeShipping' => $needsForFreeShipping,
-            'freeShippingThreshold' => $freeShippingThreshold
+        // Передаем данные во view
+        return view('cart.index', [
+            'cartItems' => $cartSummary['items'],
+            'subtotal' => $cartSummary['subtotal'],
+            'shippingCost' => $cartSummary['shipping'],
+            'total' => $cartSummary['total'],
+            'freeShippingThreshold' => $cartSummary['freeShippingThreshold'],
+            'needsForFreeShipping' => $cartSummary['needsForFreeShipping'],
         ]);
     }
 
-    /**
-     * Добавление товара в корзину
-     */
+
     public function add(Request $request, Product $product): JsonResponse
     {
         $request->validate([

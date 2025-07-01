@@ -4,11 +4,17 @@ namespace App\Http\Controllers;
 
 
 use App\Models\User;
+use App\Services\CartService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class TelegramAuthController extends Controller
 {
+    protected $cartService;
+    public function __construct(CartService $cartService)
+    {
+        $this->cartService = $cartService;
+    }
     public function handle(Request $request)
     {
         $data = $request->all();
@@ -29,11 +35,11 @@ class TelegramAuthController extends Controller
         );
 
         Auth::login($user, true); // Авторизация
-        
+
         // Мигрируем корзину гостя к авторизованному пользователю
-        $cartController = new CartController();
+        $cartController = app(CartController::class);
         $cartController->migrateGuestCart();
-        
+
         return redirect('/'); // Куда перенаправить
     }
 

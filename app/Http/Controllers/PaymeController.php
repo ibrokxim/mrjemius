@@ -2,340 +2,350 @@
 
 namespace App\Http\Controllers;
 
-use App\Exceptions\PaymeException;
+use Carbon\Carbon;
 use App\Models\Order;
-use App\Models\PaymeTransaction;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Services\TelegramService;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
+use App\Http\Resources\TransactionResource;
 
 class PaymeController extends Controller
 {
-    protected string $kassaKey;
-    protected const PAYME_LOGIN = 'Paycom'; // Логин для Basic Auth от Payme
-
-    public function webhook(Request $request)
+    public function handle(Request $request)
     {
-        Log::info('Payme webhook called', [
-            'headers' => $request->headers->all(),
-            'body' => $request->all()
+        Log::error($request->getContent());
+        $req = json_decode($request->getContent(), true);
+
+        // Проверяем, что декодирование прошло успешно и метод существует
+        if (!isset($req['method'])) {
+            return response()->json(['error' => ['code' => -32700, 'message' => 'Parse error']]);
+        }
+
+        $method = $req['method'];
+        $params = $req['params'] ?? [];
+        $id = $req['id'] ?? null;
+
+        try {
+            switch ($method) {
+                case "CheckPerformTransaction":
+                    return $this->checkPerformTransaction($params, $id);
+                case "CreateTransaction":
+                    return $this->createTransaction($params, $id);
+                case "PerformTransaction":
+                    return $this->performTransaction($params, $id);
+                case "CancelTransaction":
+                    return $this->cancelTransaction($params, $id);
+                case "CheckTransaction":
+                    return $this->checkTransaction($params, $id);
+                case "GetStatement":
+                    return $this->getStatement($params, $id);
+                case "ChangePassword":
+                    return $this->changePassword($params, $id);
+                default:
+                    return response()->json(['id' => $id, 'error' => ['code' => -32601, 'message' => [
+                        'ru' => 'Метод не найден.',
+                        'uz' => 'Metod topilmadi.',
+                        'en' => 'Method not found.'
+                    ]]]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Payme Global Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json(['id' => $id, 'error' => ['code' => -32400, 'message' => [
+                'ru' => 'Системная ошибка.',
+                'uz' => 'Tizim xatosi.',
+                'en' => 'System error.'
+            ]]]);
+        }
+    }
+
+    private function checkPerformTransaction(array $params, $id)
+    {
+        if (empty($params['account']['order_id'])) {
+            return response()->json(['id' => $id, 'error' => ['code' => -31050, 'message' =>
+                [
+                    'ru' => 'Не передан ID заказа.',
+                    'uz' => 'Buyurtma IDsi berilmagan.',
+                    'en' => 'Order ID is not provided.'
+                ]
+            ]]);
+        }
+
+        $order = Order::find($params['account']['order_id']);
+
+        if (!$order) {
+            return response()->json(['id' => $id, 'error' => ['code' => -31050, 'message' =>
+                [
+                    'ru' => 'Заказ не найден.',
+                    'uz' => 'Buyurtma topilmadi.',
+                    'en' => 'Order not found.'
+                ]
+            ]]);
+        }
+        if ($order->status !== 'pending') {
+            return response()->json(['id' => $id, 'error' => ['code' => -31050, 'message' =>
+                [
+                    'ru' => 'Статус заказа не позволяет оплату.',
+                    'uz' => 'Buyurtma holati to‘lovga ruxsat bermaydi.',
+                    'en' => 'The order status does not allow payment.'
+                ]
+            ]]);
+        }
+        if ((int)($order->total_amount) != (int)$params['amount']) {
+            return response()->json(['id' => $id, 'error' => ['code' => -31001, 'message' =>
+                [
+                    'ru' => 'Неверная сумма.',
+                    'uz' => 'Noto‘g‘ri summa.',
+                    'en' => 'The amount does not match.'
+                ]
+            ]]);
+        }
+
+        return response()->json(['id' => $id, 'result' => ['allow' => true]]);
+    }
+
+    private function createTransaction(array $params, $id)
+    {
+        // Сначала проводим все проверки
+        // === НОВАЯ ПРОВЕРКА: Ищем ДРУГУЮ активную транзакцию для этого ЗАКАЗА ===
+        $existingOrderTransaction = Transaction::where('order_id', $params['account']['order_id'])
+            ->where('state', '!=', -1) // Игнорируем уже отмененные транзакции
+            ->where('paycom_transaction_id', '!=', $params['id']) // Исключаем текущую транзакцию
+            ->first();
+
+        if ($existingOrderTransaction) {
+            // Если найдена другая транзакция для этого заказа, которая не отменена,
+            // то этот заказ уже в процессе оплаты. Блокируем новую попытку.
+            return response()->json(['id' => $id, 'error' => [
+                'code' => -31050, // Используем код ошибки "неверный ввод 'account'"
+                'message' => [
+                    'ru' => 'Для данного заказа уже существует активная транзакция.',
+                    'uz' => 'Ushbu buyurtma uchun faol tranzaksiya mavjud.',
+                    'en' => 'An active transaction already exists for this order.'
+                ],
+                'data' => [
+                    'field' => 'order_id'
+                ]
+            ]]);
+        }
+        // === КОНЕЦ НОВОЙ ПРОВЕРКИ ===
+
+
+        // Проверяем, можно ли вообще провести эту операцию (сумма, статус заказа и т.д.)
+        // Ваш вызов checkPerformTransaction здесь абсолютно правильный.
+        $checkResponse = $this->checkPerformTransaction($params, $id);
+        if (property_exists($checkResponse->getData(), 'error') && $checkResponse->getData()->error !== null) {
+            return $checkResponse;
+        }
+
+        // Ищем транзакцию по ID от Payme.
+        $transaction = Transaction::where('paycom_transaction_id', $params['id'])->first();
+
+        if ($transaction) {
+            // Если транзакция уже существует, проверяем ее состояние.
+            if ($transaction->state != 1) { // Если она не в статусе "создана"
+                return response()->json(['id' => $id, 'error' => ['code' => -31008, 'message' => [
+                    'ru' => 'Неверный статус транзакции.',
+                    'uz' => 'Tranzaksiya holati noto‘g‘ri.',
+                    'en' => 'Invalid transaction state.'
+                ]]]);
+            }
+
+            // Проверяем время жизни транзакции (12 часов = 43200 секунд)
+            if (now()->diffInSeconds(Carbon::parse($transaction->paycom_time_datetime)) > 43200) {
+                // Если просрочена, отменяем ее и возвращаем ошибку
+                $transaction->state = -1;
+                $transaction->reason = 4; // Код причины "Тайм-аут"
+                $transaction->save();
+                return response()->json(['id' => $id, 'error' => ['code' => -31008, 'message' => [
+                    'ru' => 'Транзакция истекла.',
+                    'uz' => 'Tranzaksiya muddati tugagan.',
+                    'en' => 'Transaction expired.'
+                ]]]);
+            }
+
+            // Если транзакция существует, в правильном статусе и не просрочена, возвращаем ее данные.
+            return response()->json(['id' => $id, 'result' => [
+                'create_time' => (int)$transaction->paycom_time,
+                'transaction' => (string)$transaction->id,
+                'state' => (int)$transaction->state
+            ]]);
+        }
+
+        // Если транзакции еще не было, создаем новую
+        $order = Order::find($params['account']['order_id']); // Мы уже уверены, что заказ существует
+
+        $newTransaction = Transaction::create([
+            'paycom_transaction_id' => $params['id'],
+            'paycom_time' => $params['time'],
+            'paycom_time_datetime' => Carbon::createFromTimestampMs($params['time']),
+            'amount' => $params['amount'],
+            'state' => 1, // Создана, в ожидании оплаты
+            'order_id' => $params['account']['order_id'],
+            'owner_id' => $order->user_id, // Сохраняем ID пользователя для удобства
         ]);
 
+        // Возвращаем данные о новой транзакции
+        return response()->json(['id' => $id, 'result' => [
+            'create_time' => (int)$newTransaction->paycom_time,
+            'transaction' => (string)$newTransaction->id,
+            'state' => (int)$newTransaction->state
+        ]]);
+    }
+
+    private function performTransaction(array $params, $id)
+    {
+        $transaction = Transaction::where('paycom_transaction_id', $params['id'])->first();
+        if (!$transaction) {
+            return response()->json(['id' => $id, 'error' => ['code' => -31003, 'message' => [
+                'ru' => 'Транзакция не найдена.',
+                'uz' => 'Tranzaksiya topilmadi.',
+                'en' => 'Transaction not found.'
+            ]]]);
+        }
+        if ($transaction->state == 2) {
+            return response()->json(['id' => $id, 'result' => ['transaction' => (string)$transaction->id, 'perform_time' => (int)$transaction->perform_time_unix, 'state' => (int)$transaction->state]]);
+        }
+        if ($transaction->state != 1) {
+            return response()->json(['id' => $id, 'error' => ['code' => -31008, 'message' => [
+                'ru' => 'Неверный статус транзакции.',
+                'uz' => 'Tranzaksiya holati noto‘g‘ri.',
+                'en' => 'Invalid transaction state.'
+            ]]]);
+        }
+
+        $transaction->state = 2;
+        $transaction->perform_time_unix = Carbon::now()->timestamp * 1000;
+        $transaction->perform_time = now();
+        $transaction->save();
+
+        $order = $transaction->order;
+        if ($order) {
+            $order->update(['status' => 'processing', 'payment_status' => 'paid']);
+            try {
+                (new TelegramService())->sendOrderNotifications($order);
+            } catch (\Exception $e) {
+                Log::error("Ошибка отправки Telegram для заказа {$order->id}: " . $e->getMessage());
+            }
+        }
+
+        return response()->json(['id' => $id, 'result' => ['transaction' => (string)$transaction->id, 'perform_time' => (int)$transaction->perform_time_unix, 'state' => (int)$transaction->state]]);
+    }
+    private function checkTransaction(array $params, $id)
+    {
+        // 1. Ищем транзакцию по ID от Payme
+        $transaction = Transaction::where('paycom_transaction_id', $params['id'])->first();
+
+        // 2. Если транзакция не найдена
+        if (!$transaction) {
+            return response()->json(['id' => $id, 'error' => [
+                'code' => -31003,
+                'message' => [
+                    'ru' => 'Транзакция не найдена.',
+                    'uz' => 'Tranzaksiya topilmadi.',
+                    'en' => 'Transaction not found.'
+                ]
+            ]]);
+        }
+
+        // 3. Если найдена, возвращаем ее данные в формате, который ожидает Payme
+        return response()->json(['id' => $id, 'result' => [
+            'create_time' => (int)$transaction->paycom_time,
+            'perform_time' => (int)($transaction->perform_time_unix ?? 0), // 0 если еще не выполнена
+            'cancel_time' => $transaction->cancel_time ? (Carbon::parse($transaction->cancel_time)->timestamp * 1000) : 0, // 0 если не отменена
+            'transaction' => (string)$transaction->id,
+            'state' => (int)$transaction->state,
+            'reason' => isset($transaction->reason) ? (int)$transaction->reason : null, // Причина отмены, если есть
+        ]]);
+    }
+    private function cancelTransaction(array $params, $id)
+    {
+        // 1. Ищем транзакцию
+        $transaction = Transaction::where('paycom_transaction_id', $params['id'])->first();
+        if (!$transaction) {
+            return response()->json(['id' => $id, 'error' => [
+                'code' => -31003,
+                'message' => [
+                    'ru' => 'Транзакция не найдена.',
+                    'uz' => 'Tranzaksiya topilmadi.',
+                    'en' => 'Transaction not found.'
+                ]
+            ]]);
+        }
+
+        // 2. Определяем новый статус и время отмены
+        $cancellationTime = now();
+
+        if ($transaction->state == 1) { // Если была в ожидании
+            $transaction->state = -1; // Становится "отменена"
+        } elseif ($transaction->state == 2) { // Если была успешной (нужно сделать возврат)
+            // ВАЖНО: Здесь должна быть ваша бизнес-логика возврата денег,
+            // если это необходимо. Сейчас мы просто меняем статус.
+            $transaction->state = -2; // Становится "отменена после выполнения"
+        } else { // Если уже была отменена (-1 или -2)
+            // Ничего не делаем, просто возвращаем текущее состояние
+        }
+
+        // 3. Сохраняем изменения в транзакции
+        $transaction->reason = $params['reason'];
+        if (!$transaction->cancel_time) { // Записываем время отмены, только если его еще нет
+            $transaction->cancel_time = $cancellationTime;
+        }
+        $transaction->save();
+
+        // 4. Обновляем статус заказа, если он еще не в финальном статусе
+        $order = $transaction->order;
+        if ($order && !in_array($order->status, ['delivered', 'cancelled'])) {
+            $order->status = 'cancelled';
+            $order->save();
+        }
+
+        // 5. Возвращаем успешный ответ
+        return response()->json(['id' => $id, 'result' => [
+            'transaction' => (string)$transaction->id,
+            'cancel_time' => Carbon::parse($transaction->cancel_time)->timestamp * 1000,
+            'state' => (int)$transaction->state,
+        ]]);
+    }
+    private function getStatement(array $params, $id)
+    {
+        if (empty($params['from']) || empty($params['to'])) {
+            return response()->json([
+                'id' => $id,
+                'error' => [
+                    'code' => -32602,
+                    'message' => [
+                        'ru' => 'Параметры from и to обязательны.',
+                        'uz' => '"from" va "to" parametrlari majburiy.',
+                        'en' => 'Parameters "from" and "to" are required.'
+                    ]
+                ]
+            ]);
+        }
+
+        $transactions = Transaction::getTransactionsByTimeRange($params['from'], $params['to']);
+
         return response()->json([
+            'id' => $id,
             'result' => [
-                'message' => 'Webhook is working'
+                'transactions' => TransactionResource::collection($transactions),
             ]
         ]);
     }
-//    public function __construct()
-//    {
-//        $this->kassaKey = config('payme.kassa_key_for_callback');
-//        if (empty($this->kassaKey)) {
-//            Log::critical('Payme Kassa Key for callback is not configured!');
-//            // В реальном приложении это должно быть обработано более строго
-//        }
-//    }
-//
-//    /**
-//     * Обработчик всех RPC запросов от Payme
-//     */
-//    public function handle(Request $request)
-//    {
-//        $payload = $request->all();
-//        Log::channel('payme')->info('Payme RPC Request:', $payload); // Пишем в отдельный лог-канал 'payme'
-//
-//        // 1. Аутентификация
-//        $authHeader = $request->header('Authorization');
-//        $expectedHeader = 'Basic ' . base64_encode(self::PAYME_LOGIN . ':' . $this->kassaKey);
-//
-//        if (!$authHeader || !hash_equals($expectedHeader, $authHeader)) {
-//            Log::channel('payme')->warning('Payme RPC: Invalid Authorization.', ['received' => $authHeader]);
-//            return $this->errorResponse($payload['id'] ?? null, -32504, 'Недостаточно прав для выполнения данной операции (неверный токен авторизации).');
-//        }
-//
-//        // 2. Валидация JSON-RPC структуры
-//        if (!isset($payload['method']) || !isset($payload['id']) || !array_key_exists('params', $payload)) {
-//            Log::channel('payme')->warning('Payme RPC: Invalid JSON-RPC structure.', $payload);
-//            return $this->errorResponse($payload['id'] ?? null, -32600, 'Невалидный запрос.');
-//        }
-//
-//        $method = $payload['method'];
-//        $params = $payload['params'];
-//        $requestId = $payload['id'];
-//
-//        try {
-//            switch ($method) {
-//                case 'CheckPerformTransaction':
-//                    return $this->checkPerformTransaction($params, $requestId);
-//                case 'CreateTransaction':
-//                    return $this->createTransaction($params, $requestId);
-//                case 'PerformTransaction':
-//                    return $this->performTransaction($params, $requestId);
-//                case 'CancelTransaction':
-//                    return $this->cancelTransaction($params, $requestId);
-//                case 'CheckTransaction':
-//                    return $this->checkTransaction($params, $requestId);
-//                // case 'GetStatement':
-//                //     return $this->getStatement($params, $requestId);
-//                default:
-//                    return $this->errorResponse($requestId, -32601, 'Метод не найден.');
-//            }
-//        } catch (PaymeException $e) {
-//            Log::channel('payme')->error('Payme RPC Exception:', [
-//                'method' => $method, 'id' => $requestId, 'params' => $params,
-//                'code' => $e->getPaymeErrorCode(), 'message' => $e->getMessageForPayme(), 'data' => $e->getPaymeErrorData()
-//            ]);
-//            return $this->errorResponse($requestId, $e->getPaymeErrorCode(), $e->getMessageForPayme(), $e->getPaymeErrorData());
-//        } catch (\Exception $e) {
-//            Log::channel('payme')->critical('Payme RPC Unhandled Exception:', [
-//                'method' => $method, 'id' => $requestId, 'params' => $params,
-//                'message' => $e->getMessage(), 'trace' => $e->getTraceAsString()
-//            ]);
-//            return $this->errorResponse($requestId, -32400, 'Системная ошибка.');
-//        }
-//    }
-//
-//    // --- Реализация RPC методов ---
-//
-//    protected function checkPerformTransaction(array $params, $requestId)
-//    {
-//        $validator = Validator::make($params, [
-//            'amount' => 'required|integer|min:1',
-//            'account.order_id' => 'required', // или другой ваш идентификатор
-//        ]);
-//        if ($validator->fails()) {
-//            throw new PaymeException('Неверные параметры.', -31050, $validator->errors()->first());
-//        }
-//
-//        $orderId = $params['account']['order_id'];
-//        $amount = $params['amount'];
-//
-//        $order = Order::find($orderId);
-//        if (!$order) {
-//            throw new PaymeException(['ru' => 'Заказ не найден', 'uz' => 'Buyurtma topilmadi'], -31050, 'order_not_found');
-//        }
-//        if ((int)round($order->total_amount * 100) !== $amount) {
-//            throw new PaymeException('Неверная сумма.', -31001);
-//        }
-//        if (!in_array($order->status, [Order::STATUS_PENDING, Order::STATUS_PAYMENT_FAILED])) { // Пример статусов
-//            throw new PaymeException('Статус заказа не позволяет оплату.', -31051, 'order_state_invalid');
-//        }
-//        // Дополнительные проверки, если нужны
-//
-//        return $this->successResponse($requestId, ['allow' => true]);
-//    }
-//
-//    protected function createTransaction(array $params, $requestId)
-//    {
-//        $validator = Validator::make($params, [
-//            'id' => 'required|string|max:25', // Payme transaction ID
-//            'time' => 'required|numeric',      // Payme time (ms)
-//            'amount' => 'required|integer|min:1',
-//            'account.order_id' => 'required',
-//        ]);
-//        if ($validator->fails()) {
-//            throw new PaymeException('Неверные параметры.', -31050, $validator->errors()->first());
-//        }
-//
-//        $paymeTransactionId = $params['id'];
-//        $paymeTimeMs = $params['time'];
-//        $orderId = $params['account']['order_id'];
-//        $amount = $params['amount'];
-//
-//        $order = Order::find($orderId);
-//        // Повторные проверки, как в CheckPerformTransaction
-//        if (!$order || (int)round($order->total_amount * 100) !== $amount || !in_array($order->status, [Order::STATUS_PENDING, Order::STATUS_PAYMENT_FAILED])) {
-//            throw new PaymeException('Заказ не может быть обработан.', -31050, 'order_validation_failed');
-//        }
-//
-//        return DB::transaction(function () use ($order, $paymeTransactionId, $paymeTimeMs, $amount, $requestId) {
-//            $transaction = PaymeTransaction::where('paycom_transaction_id', $paymeTransactionId)->first();
-//
-//            if ($transaction) {
-//                if ($transaction->state != PaymeTransaction::STATE_CREATED) {
-//                    throw new PaymeException('Состояние транзакции не позволяет ее создать повторно.', -31008);
-//                }
-//                // Уже создана, возвращаем ее данные
-//            } else {
-//                $transaction = PaymeTransaction::create([
-//                    'paycom_transaction_id' => $paymeTransactionId,
-//                    'paycom_time' => (string)$paymeTimeMs,
-//                    'paycom_time_datetime' => \Carbon\Carbon::createFromTimestampMs($paymeTimeMs),
-//                    'create_time' => (string)(time() * 1000), // Наше время создания
-//                    'state' => PaymeTransaction::STATE_CREATED,
-//                    'order_id' => $order->id,
-//                    'amount' => $amount,
-//                ]);
-//                // Обновляем статус заказа
-//                $order->status = Order::STATUS_PENDING_PAYMENT; // Ваш статус "Ожидает оплаты Payme"
-//                $order->save();
-//            }
-//
-//            return $this->successResponse($requestId, [
-//                'create_time' => (int)$transaction->create_time, // Документация Payme ожидает int (ms)
-//                'transaction' => (string)$transaction->id, // ID НАШЕЙ транзакции
-//                'state' => (int)$transaction->state,
-//            ]);
-//        });
-//    }
-//
-//    protected function performTransaction(array $params, $requestId)
-//    {
-//        $validator = Validator::make($params, ['id' => 'required|string|max:25']);
-//        if ($validator->fails()) {
-//            throw new PaymeException('Неверные параметры.', -31050, $validator->errors()->first());
-//        }
-//        $paymeTransactionId = $params['id'];
-//
-//        return DB::transaction(function () use ($paymeTransactionId, $requestId) {
-//            $transaction = PaymeTransaction::where('paycom_transaction_id', $paymeTransactionId)->first();
-//
-//            if (!$transaction) {
-//                throw new PaymeException('Транзакция не найдена.', -31003);
-//            }
-//
-//            if ($transaction->state == PaymeTransaction::STATE_COMPLETED) {
-//                // Уже завершена
-//            } elseif ($transaction->state == PaymeTransaction::STATE_CREATED) {
-//                // Проверяем таймаут (12 часов = 43 200 000 мс)
-//                $currentTimeMs = time() * 1000;
-//                if (($currentTimeMs - (int)$transaction->paycom_time) > 43200000) {
-//                    $transaction->state = PaymeTransaction::STATE_CANCELLED_AFTER_COMPLETE; // Или другой код для таймаута
-//                    $transaction->reason = PaymeTransaction::REASON_TIMEOUT;
-//                    $transaction->save();
-//                    throw new PaymeException('Таймаут транзакции.', -31008, 'timeout');
-//                }
-//
-//                // Проводим транзакцию
-//                $transaction->state = PaymeTransaction::STATE_COMPLETED;
-//                $transaction->perform_time = (string)$currentTimeMs;
-//                $transaction->save();
-//
-//                // Обновляем заказ
-//                $order = $transaction->order;
-//                if ($order) {
-//                    $order->status = Order::STATUS_PAID; // Ваш статус "Оплачен"
-//                    $order->paid_at = now();
-//                    $order->save();
-//                    // TODO: Отправка уведомлений, фискализация (если нужна на этом этапе)
-//                    // $paymeService = resolve(PaymeService::class);
-//                    // $paymeService->sendReceiptToFiscalModule(...)
-//                }
-//            } else { // Неверное состояние для проведения
-//                throw new PaymeException('Невозможно провести транзакцию в текущем состоянии.', -31008);
-//            }
-//
-//            return $this->successResponse($requestId, [
-//                'perform_time' => (int)$transaction->perform_time,
-//                'transaction' => (string)$transaction->id,
-//                'state' => (int)$transaction->state,
-//            ]);
-//        });
-//    }
-//
-//    protected function cancelTransaction(array $params, $requestId)
-//    {
-//        $validator = Validator::make($params, [
-//            'id' => 'required|string|max:25',
-//            'reason' => 'required|integer',
-//        ]);
-//        if ($validator->fails()) {
-//            throw new PaymeException('Неверные параметры.', -31050, $validator->errors()->first());
-//        }
-//
-//        $paymeTransactionId = $params['id'];
-//        $reason = $params['reason'];
-//
-//        return DB::transaction(function () use ($paymeTransactionId, $reason, $requestId) {
-//            $transaction = PaymeTransaction::where('paycom_transaction_id', $paymeTransactionId)->first();
-//
-//            if (!$transaction) {
-//                throw new PaymeException('Транзакция не найдена.', -31003);
-//            }
-//
-//            $cancelTime = (string)(time() * 1000);
-//
-//            if ($transaction->state == PaymeTransaction::STATE_CREATED) {
-//                $transaction->state = PaymeTransaction::STATE_CANCELLED;
-//            } elseif ($transaction->state == PaymeTransaction::STATE_COMPLETED) {
-//                // Отмена УЖЕ ПРОВЕДЕННОЙ транзакции (возврат)
-//                // Для этого обычно используется receipts.cancel с причиной возврата (5)
-//                // или отдельный процесс возврата в Payme.
-//                // Если это отмена до клиринга, то возможно -2.
-//                // Здесь нужно уточнить бизнес-логику. Если это отмена по инициативе мерчанта после оплаты,
-//                // то это скорее возврат, и Payme может иметь для этого другой механизм.
-//                // Пока предполагаем, что если причина 5, то это возврат.
-//                if ($reason == PaymeTransaction::REASON_REFUND) {
-//                    $transaction->state = PaymeTransaction::STATE_CANCELLED_AFTER_COMPLETE;
-//                } else {
-//                    // Нельзя отменить успешно проведенную транзакцию обычной отменой
-//                    throw new PaymeException('Невозможно отменить уже успешно проведенную транзакцию этим методом.', -31007);
-//                }
-//
-//            } elseif ($transaction->state < 0) { // Уже отменена
-//                // Возвращаем текущее состояние отмены
-//            } else {
-//                throw new PaymeException('Невозможно отменить транзакцию в текущем состоянии.', -31008);
-//            }
-//
-//            $transaction->cancel_time = $cancelTime;
-//            $transaction->reason = $reason;
-//            $transaction->save();
-//
-//            // Обновляем заказ
-//            $order = $transaction->order;
-//            if ($order && $order->status !== Order::STATUS_CANCELLED) { // Если не был отменен вручную
-//                $order->status = Order::STATUS_PAYMENT_CANCELLED; // Ваш статус "Оплата отменена"
-//                $order->save();
-//                // TODO: Логика возврата товаров на склад
-//            }
-//
-//            return $this->successResponse($requestId, [
-//                'cancel_time' => (int)$transaction->cancel_time,
-//                'transaction' => (string)$transaction->id,
-//                'state' => (int)$transaction->state,
-//            ]);
-//        });
-//    }
-//
-//    protected function checkTransaction(array $params, $requestId)
-//    {
-//        $validator = Validator::make($params, ['id' => 'required|string|max:25']);
-//        if ($validator->fails()) {
-//            throw new PaymeException('Неверные параметры.', -31050, $validator->errors()->first());
-//        }
-//        $paymeTransactionId = $params['id'];
-//
-//        $transaction = PaymeTransaction::where('paycom_transaction_id', $paymeTransactionId)->first();
-//
-//        if (!$transaction) {
-//            throw new PaymeException('Транзакция не найдена.', -31003);
-//        }
-//
-//        return $this->successResponse($requestId, [
-//            'create_time'   => (int)($transaction->create_time ?: $transaction->paycom_time), // Если нашего create_time нет, берем от Payme
-//            'perform_time'  => (int)($transaction->perform_time ?: 0),
-//            'cancel_time'   => (int)($transaction->cancel_time ?: 0),
-//            'transaction'   => (string)$transaction->id, // ID нашей транзакции
-//            'state'         => (int)$transaction->state,
-//            'reason'        => $transaction->state < 0 ? ($transaction->reason ?? null) : null,
-//        ]);
-//    }
-//
-//
-//    // Вспомогательные методы для ответов
-//    protected function successResponse($requestId, array $result)
-//    {
-//        return response()->json(['result' => $result, 'id' => $requestId]);
-//    }
-//
-//    protected function errorResponse($requestId, int $code, $message, $data = null)
-//    {
-//        $error = ['code' => $code, 'message' => $message];
-//        if ($data !== null) {
-//            $error['data'] = $data;
-//        }
-//        return response()->json(['error' => $error, 'id' => $requestId], 200); // Payme ожидает HTTP 200 даже для ошибок приложения
-//    }
+
+    private function changePassword(array $params, $id)
+    {
+        return response()->json([
+            'id' => $id,
+            'error' => [
+                'code' => -32504,
+                'message' => [
+                    'ru' => 'Недостаточно привилегий для выполнения метода.',
+                    'uz' => 'Ushbu metodni bajarish uchun yetarli huquqlar mavjud emas.',
+                    'en' => 'Insufficient privileges to perform the method.'
+                ]
+            ]
+        ]);
+    }
+
 }

@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use Filament\Forms\Components\Fieldset;
-use Filament\Forms\Components\Select;
 use Filament\Tables;
 use App\Models\Banner;
 use Filament\Forms\Form;
@@ -20,8 +19,10 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use App\Filament\Resources\BannerResource\RelationManagers;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Filament\Resources\Concerns\Translatable;
+use Intervention\Image\Image;
 
 class BannerResource extends Resource
 {
@@ -97,6 +98,57 @@ class BannerResource extends Resource
             ]);
     }
 
+    protected static function mutateFormDataBeforeCreate(array $data): array
+    {
+        return self::processAndResizeImage($data);
+    }
+
+    // --- 3. МЕТОД ДЛЯ ОБРАБОТКИ ПЕРЕД ОБНОВЛЕНИЕМ ---
+    protected static function mutateFormDataBeforeUpdate(array $data): array
+    {
+        return self::processAndResizeImage($data);
+    }
+
+    /**
+     * Вспомогательный метод для обработки, обрезки и сохранения изображения.
+     */
+    protected static function processAndResizeImage(array $data): array
+    {
+        // Проверяем, был ли загружен новый файл. В Filament - это строка с временным путем.
+        if (isset($data['banner_image_url']) && is_string($data['banner_image_url'])) {
+
+            $originalPath = $data['banner_image_url'];
+            $storage = Storage::disk('public');
+
+            // Проверяем, что файл реально существует
+            if (!$storage->exists($originalPath)) {
+                return $data; // Возвращаем данные без изменений, если файла нет
+            }
+
+            // Читаем временный файл
+            $image = Image::read($storage->path($originalPath));
+
+            // Определяем целевые размеры из формы
+            $targetWidth = $data['width'] ?? 1296;
+            $targetHeight = $data['height'] ?? 450;
+
+            // Обрезаем изображение точно до нужных пропорций, центрируя
+            $image->cover($targetWidth, $targetHeight, 'center');
+
+            // Создаем новое имя файла и путь для обработанного изображения
+            $filename = Str::uuid() . '.' . pathinfo($originalPath, PATHINFO_EXTENSION);
+            $processedPath = 'banner-images/processed/' . $filename;
+
+            // Сохраняем обработанное изображение
+            $storage->put($processedPath, (string) $image->encode());
+
+            // ПОДМЕНЯЕМ ПУТЬ В ДАННЫХ!
+            // Теперь в базу сохранится путь к новому, обрезанному файлу
+            $data['banner_image_url'] = $processedPath;
+        }
+
+        return $data;
+    }
     public static function table(Table $table): Table
     {
         return $table

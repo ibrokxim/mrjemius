@@ -7,7 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
-class SendOrderNotifications implements ShouldQueue
+class SendOrderNotifications
 {
     /**
      * Create the event listener.

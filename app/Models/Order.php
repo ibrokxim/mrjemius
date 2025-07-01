@@ -33,7 +33,8 @@ class Order extends Model
         'customer_notes',
         'admin_notes',
         'shipped_at',
-        'delivered_at', ];
+        'delivered_at',
+        'shipping_method',];
 
     protected $casts = [
         'subtotal_amount' => 'decimal:2',
@@ -80,6 +81,5 @@ class Order extends Model
         return $this->belongsToMany(Promotion::class, 'order_promotion')
             ->withPivot('discount_applied');
     }
-
 
 }

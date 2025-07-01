@@ -1,13 +1,52 @@
 <!-- navbar -->
 <div class="border-bottom">
-{{--    <div class="bg-light py-1">--}}
-{{--        <div class="container">--}}
-{{--            <div class="row">--}}
-{{--                <div class="col-md-6 col-12 text-center text-md-start"><span>Супер скидки - Экономьте больше с купонами</span></div>--}}
-{{--                --}}{{-- ... остальная часть верхней плашки ... --}}
-{{--            </div>--}}
-{{--        </div>--}}
-{{--    </div>--}}
+    <div class="bg-light py-1">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6 col-12 text-center text-md-start"><span>Супер скидки - Экономьте больше с купонами</span></div>
+                @php
+                    $available_locales = [
+                        'ru' => [
+                            'name' => 'Русский',
+                            'flag' => '<svg width="16" height="13" viewBox="0 0 16 13" fill="none" xmlns="http://www.w3.org/2000/svg"><g clip-path="url(#clip_ru)"><path d="M0 0.5H16V12.5H0V0.5Z" fill="white"></path><path d="M0 4.5H16V12.5H0V4.5Z" fill="#0039A6"></path><path d="M0 8.5H16V12.5H0V8.5Z" fill="#D52B1E"></path></g><defs><clipPath id="clip_ru"><rect width="16" height="12" fill="white" transform="translate(0 0.5)"></rect></clipPath></defs></svg>'
+                        ],
+                        'uz' => [
+                            'name' => 'Oʻzbekcha',
+                            'flag' => '<svg width="16" height="13" viewBox="0 0 16 13" fill="none" xmlns="http://www.w3.org/2000/svg"><g clip-path="url(#clip0_1_2)"><path d="M0 0.5H16V12.5H0V0.5Z" fill="#1EB53A"/><path d="M0 0.5H16V8.5H0V0.5Z" fill="white"/><path d="M0 0.5H16V4.5H0V0.5Z" fill="#0099B5"/><circle cx="2.5" cy="2.5" r="1.5" fill="white"/></g><defs><clipPath id="clip0_1_2"><rect width="16" height="12" fill="white" transform="translate(0 0.5)"/></clipPath></defs></svg>'
+                        ]
+
+                    ];
+                    $current_locale_code = app()->getLocale();
+                    $current_locale_data = $available_locales[$current_locale_code];
+                @endphp
+                <div class="col-6 text-end d-none d-md-block">
+                    <div class="dropdown selectBox">
+                        <a class="dropdown-toggle selectValue text-reset" href="#" data-bs-toggle="dropdown" aria-expanded="false">
+                       <span class="me-2">
+                            {!! $current_locale_data['flag'] !!}
+                       </span>
+                            {{ $current_locale_data['name'] }}
+                        </a>
+
+                        <ul class="dropdown-menu">
+                            @foreach ($available_locales as $locale_code => $locale_data)
+                                @if ($locale_code !== $current_locale_code)
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('language.switch', $locale_code) }}">
+                                         <span class="me-2">
+                                            {!! $locale_data['flag'] !!}
+                                         </span>
+                                            {{ $locale_data['name'] }}
+                                        </a>
+                                    </li>
+                                @endif
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="py-5">
         <div class="container">
             <div class="row w-100 align-items-center gx-lg-2 gx-0">
@@ -161,6 +200,34 @@
                     <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
                 </div>
                 <div class="offcanvas-body">
+                    <!-- Добавляем переключатель языка для мобилки -->
+                    <div class="d-block d-lg-none mb-4">
+                        <div class="dropdown w-100">
+                            <button class="btn btn-outline-secondary dropdown-toggle w-100 d-flex justify-content-between align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="d-flex align-items-center">
+                                    <span class="me-2">
+                                        {!! $current_locale_data['flag'] !!}
+                                    </span>
+                                    {{ $current_locale_data['name'] }}
+                                </span>
+                            </button>
+                            <ul class="dropdown-menu w-100">
+                                @foreach ($available_locales as $locale_code => $locale_data)
+                                    @if ($locale_code !== $current_locale_code)
+                                        <li>
+                                            <a class="dropdown-item d-flex align-items-center" href="{{ route('language.switch', $locale_code) }}">
+                                                <span class="me-2">
+                                                    {!! $locale_data['flag'] !!}
+                                                </span>
+                                                {{ $locale_data['name'] }}
+                                            </a>
+                                        </li>
+                                    @endif
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+
                     <div class="d-block d-lg-none mb-4">
                         <form action="{{ route('search.products') }}" method="GET">
                             <div class="input-group">
@@ -212,7 +279,7 @@
                                  <rect x="3" y="14" width="7" height="7"></rect>
                               </svg>
                            </span>
-                            Все категории
+                            {{__('Categories')}}
                         </a>
                         <div class="collapse mt-2" id="collapseExample">
                             <div class="card card-body">
@@ -242,7 +309,7 @@
                                  <rect x="3" y="14" width="7" height="7"></rect>
                               </svg>
                            </span>
-                            Категории
+                            {{__('Categories')}}
                         </button>
                         <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
                             @foreach($categories as $cat)
@@ -253,16 +320,16 @@
                     <div>
                         <ul class="navbar-nav align-items-center">
                             <li class="nav-item dropdown w-100 w-lg-auto">
-                                <a class="nav-link " href="{{ route('welcome') }}#products-section" role="button"  aria-expanded="false">Продукты</a>
+                                <a class="nav-link " href="{{ route('welcome') }}#products-section" role="button"  aria-expanded="false">{{__('Products')}}</a>
                             </li>
                             <li class="nav-item dropdown w-100 w-lg-auto">
-                                <a class="nav-link " href="{{ route('blog.index') }}" role="button"  aria-expanded="false">Полезные советы</a>
+                                <a class="nav-link " href="{{ route('blog.index') }}" role="button"  aria-expanded="false">{{__('Blog')}}</a>
                             </li>
                             <li class="nav-item dropdown w-100 w-lg-auto">
-                                <a class="nav-link " href="https://www.grechkafood.uz/" role="button"  aria-expanded="false">Правильное питание</a>
+                                <a class="nav-link " href="https://www.grechkafood.uz/" role="button"  aria-expanded="false">{{__('PP')}}</a>
                             </li>
                             <li class="nav-item dropdown w-100 w-lg-auto">
-                                <a class="nav-link " href="{{route('contacts')}}" role="button"  aria-expanded="false">Контакты</a>
+                                <a class="nav-link " href="{{route('contacts')}}" role="button"  aria-expanded="false">{{__('Contacts')}}</a>
                             </li>
                         </ul>
                     </div>

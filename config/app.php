@@ -25,7 +25,7 @@ return [
     |
     | This value determines the "environment" your application is currently
     | running in. This may determine how you prefer to configure various
-    | services the application utilizes. Set this in your ".env.zdzs" file.
+    | services the application utilizes. Set this in your ".env.azadads" file.
     |
     */
 
@@ -164,6 +164,7 @@ return [
         App\Providers\Filament\AdminPanelProvider::class,
         App\Providers\RouteServiceProvider::class,
         App\Providers\ViewServiceProvider::class,
+        Khamdullaevuz\Payme\PaymeServiceProvider::class,
     ])->toArray(),
 
     /*
@@ -178,6 +179,7 @@ return [
     */
 
     'aliases' => Facade::defaultAliases()->merge([
+        'Payme' => Khamdullaevuz\Payme\Facades\Payme::class,
         // 'Example' => App\Facades\Example::class,
     ])->toArray(),
 

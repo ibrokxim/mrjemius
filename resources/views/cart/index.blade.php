@@ -2,156 +2,72 @@
 @section('title', 'Моя корзина')
 @push('styles')
     <style>
-        /* Улучшение кнопок +/- в корзине */
+        /* Компактный и красивый счетчик количества */
         .input-spinner {
             display: inline-flex;
             align-items: center;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            overflow: hidden;
-            background: white;
-            max-width: 80px; /* Еще больше уменьшил */
+            border: 1px solid #e9ecef;
+            border-radius: 0.375rem; /* 6px */
         }
-
         .input-spinner .btn {
-            width: 22px; /* Сильно уменьшил */
-            height: 22px; /* Сильно уменьшил */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: none !important;
-            border-radius: 0;
-            background: #f8f9fa;
-            color: #495057;
-            font-size: 12px; /* Еще меньше */
-            font-weight: bold;
-            line-height: 1;
+            width: 28px;
+            height: 28px;
+            font-size: 1rem;
+            font-weight: 400;
+            color: #6c757d;
+            background-color: #f8f9fa;
+            border: none;
             padding: 0;
-            transition: all 0.2s ease;
-            flex-shrink: 0;
-            min-width: 22px;
+            line-height: 1;
         }
-
-        .input-spinner .btn:hover {
-            background: #e9ecef;
-            color: #212529;
-        }
-
-        .input-spinner .btn:active {
-            background: #dee2e6;
-        }
-
+        .input-spinner .btn:first-child { border-right: 1px solid #e9ecef; }
+        .input-spinner .btn:last-child { border-left: 1px solid #e9ecef; }
         .input-spinner .form-input {
-            border: none !important;
-            background: white;
+            width: 40px;
+            height: 28px;
             text-align: center;
-            font-weight: 600;
-            color: #212529;
-            width: 36px; /* Сильно уменьшил */
-            height: 22px; /* Сильно уменьшил */
-            margin: 0;
-            padding: 0 2px;
-            outline: none;
-            box-shadow: none;
-            flex-shrink: 0;
-            font-size: 11px; /* Еще меньше */
+            border: none;
+            background-color: white;
+            font-weight: 500;
+            font-size: 0.9rem;
         }
-
         .input-spinner .form-input:focus {
             outline: none;
             box-shadow: none;
         }
 
-        /* Стили для кнопки удаления после суммы */
+        /* Кнопка удаления */
         .delete-item-btn {
             background: none;
             border: none;
             color: #6c757d;
-            padding: 4px;
+            padding: 0.25rem 0.5rem;
+            margin-left: 0.5rem; /* Отступ от цены */
             cursor: pointer;
-            transition: color 0.2s ease;
-            margin-left: 8px;
+            line-height: 1;
+        }
+        .delete-item-btn:hover { color: #dc3545; }
+        .delete-item-btn svg { width: 18px; height: 18px; }
+        .checkout-button-final {
+            /* Ярко-зеленый цвет с вашего скриншота */
+            background-color: #00b853;
+            border-color: #00b853;
+            /* Базовые настройки шрифта */
+            font-size: 1rem;
+            font-weight: 500;
         }
 
-        .delete-item-btn:hover {
-            color: #dc3545;
+        .checkout-button-final:hover {
+            background-color: #009c46;
+            border-color: #009c46;
         }
 
-        .delete-item-btn svg {
-            width: 18px;
-            height: 18px;
+        /* Делаем шрифт цены немного крупнее, чтобы выделить ее */
+        .checkout-button-final .fw-bold {
+            font-size: 1.1rem;
         }
 
-        /* Мобильная оптимизация */
-        @media (max-width: 576px) {
-            /* Улучшение отступов в строке товара корзины */
-            .list-group-item .row .col-3 {
-                padding-left: 8px;
-                padding-right: 8px;
-            }
 
-            /* Выравнивание цены */
-            .item-total-price {
-                font-size: 14px;
-                font-weight: 700;
-            }
-
-            /* Компактный размер для очень маленьких экранов */
-            .input-spinner {
-                max-width: 70px; /* Еще меньше для мобильных */
-            }
-
-            .input-spinner .btn {
-                width: 20px; /* Еще меньше для мобильных */
-                height: 20px;
-                font-size: 10px;
-                min-width: 20px;
-            }
-
-            .input-spinner .form-input {
-                height: 20px;
-                width: 30px;
-                font-size: 10px;
-                padding: 0 1px;
-            }
-
-            .delete-item-btn svg {
-                width: 16px;
-                height: 16px;
-            }
-        }
-
-        /* Для планшетов */
-        @media (min-width: 577px) and (max-width: 991px) {
-            .input-spinner .btn {
-                width: 21px;
-                height: 21px;
-                font-size: 11px;
-                min-width: 21px;
-            }
-
-            .input-spinner .form-input {
-                height: 21px;
-                width: 34px;
-                font-size: 11px;
-            }
-        }
-
-        /* Дополнительные стили для лучшего вида */
-        .cart-item-remove-btn {
-            font-size: 13px;
-            color: #6c757d;
-            transition: color 0.2s ease;
-        }
-
-        .cart-item-remove-btn:hover {
-            color: #dc3545;
-        }
-
-        .cart-item-remove-btn svg {
-            width: 12px;
-            height: 12px;
-        }
     </style>
 @endpush
 
@@ -203,48 +119,46 @@
                                 <ul class="list-group list-group-flush">
                                     @foreach ($cartItems as $item)
                                         <li class="list-group-item py-3 ps-0 @if(!$loop->last) border-bottom @endif" id="cart-item-row-{{ $item->id }}">
-                                            <!-- row -->
-                                            <div class="row align-items-center">
-                                                <div class="col-6 col-md-6 col-lg-7">
-                                                    <div class="d-flex">
-                                                        <img src="{{ $item->product->primaryImage ? asset('storage/' . $item->product->primaryImage->image_url) : asset('assets/images/placeholder.png') }}"
-                                                             alt="{{ $item->product->name }}" class="icon-shape icon-xxl" />
-                                                        <div class="ms-3">
-                                                            <a href="{{ route('product.show', $item->product->slug) }}" class="text-inherit">
-                                                                <h6 class="mb-0">{{ $item->product->name }}</h6>
-                                                            </a>
-                                                            <span>
-<small class="text-muted">
-Цена: {{ number_format($item->product->sell_price ?? $item->product->price, 0, '.', ' ') }} сум.
-</small>
-</span>
-                                                        </div>
+
+                                            {{-- Используем Flexbox вместо .row --}}
+                                            <div class="d-flex align-items-center">
+
+                                                {{-- 1. Изображение и Название (занимает все доступное место) --}}
+                                                <div class="flex-grow-1 d-flex align-items-center">
+                                                    <img src="{{ $item->product->primaryImage ? asset('storage/' . $item->product->primaryImage->image_url) : asset('assets/images/placeholder.png') }}"
+                                                         alt="{{ $item->product->name }}" class="icon-shape icon-xxl" />
+                                                    <div class="ms-3">
+                                                        <a href="{{ route('product.show', $item->product->slug) }}" class="text-inherit">
+                                                            <h6 class="mb-0">{{ $item->product->name }}</h6>
+                                                        </a>
+                                                        <span>
+{{--                        <small class="text-muted">--}}
+{{--                            Цена: {{ number_format($item->product->sell_price ?? $item->product->price, 0, '.', ' ') }} сум.--}}
+{{--                        </small>--}}
+                    </span>
                                                     </div>
                                                 </div>
-                                                <!-- input group -->
-                                                <div class="col-3 col-md-3 col-lg-3">
-                                                    <div class="input-group input-spinner cart-item-quantity-control" data-item-id="{{ $item->id }}">
-                                                        <button type="button" class="button-minus btn btn-sm border" data-field="quantity">-</button>
+
+                                                {{-- 2. Счетчик количества, Цена и Удаление (сгруппированы вместе) --}}
+                                                <div class="d-flex align-items-center">
+                                                    {{-- Счетчик количества --}}
+                                                    <div class="input-spinner cart-item-quantity-control" data-item-id="{{ $item->id }}">
+                                                        <button type="button" class="button-minus btn" data-field="quantity">-</button>
                                                         <input type="number" step="1" max="{{ $item->product->stock_quantity }}" value="{{ $item->quantity }}" name="quantity"
-                                                               class="quantity-field form-control-sm form-input text-center border-start-0 border-end-0 cart-item-quantity-input"
-                                                               readonly>
-                                                        <button type="button" class="button-plus btn btn-sm border" data-field="quantity">+</button>
+                                                               class="quantity-field form-input text-center" readonly>
+                                                        <button type="button" class="button-plus btn" data-field="quantity">+</button>
                                                     </div>
-                                                </div>
-                                                <!-- price -->
-                                                <div class="col-3 col-md-3 col-lg-2 text-lg-end text-start text-md-end d-flex align-items-center justify-content-end">
-                                                    <div class="text-end">
-<span class="fw-bold text-dark item-total-price" data-item-id="{{ $item->id }}">
-{{ number_format(($item->product->sell_price ?? $item->product->price) * $item->quantity, 0, '.', ' ') }} сум
-</span>
-                                                        @if($item->product->sell_price && $item->product->sell_price < $item->product->price)
-                                                            <div class="text-decoration-line-through text-muted small">
-                                                                {{ number_format($item->product->price * $item->quantity, 0, '.', ' ') }} сум
-                                                            </div>
-                                                        @endif
+
+                                                    {{-- Цена --}}
+                                                    <div class="text-end ms-3" style="min-width: 90px;"> {{-- Задаем минимальную ширину для цены --}}
+                                                        <span class="fw-bold text-dark item-total-price" data-item-id="{{ $item->id }}">
+                        {{ number_format(($item->product->sell_price ?? $item->product->price) * $item->quantity, 0, '.', ' ') }} сум
+                    </span>
                                                     </div>
+
+                                                    {{-- Кнопка удаления --}}
                                                     <button class="delete-item-btn cart-item-remove-btn" data-item-id="{{ $item->id }}" title="Удалить товар">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                                             <polyline points="3 6 5 6 21 6"></polyline>
                                                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                                                             <line x1="10" y1="11" x2="10" y2="17"></line>
@@ -252,6 +166,7 @@
                                                         </svg>
                                                     </button>
                                                 </div>
+
                                             </div>
                                         </li>
                                     @endforeach
@@ -301,11 +216,16 @@
                                         </ul>
                                     </div>
                                     <div class="d-grid mb-1 mt-4">
-                                        <button class="btn btn-primary btn-lg d-flex justify-content-between align-items-center"
-                                                onclick="window.location.href='{{ route('checkout.index') }}'">
-                                            <span>Перейти к оформлению</span>
-                                            <span class="fw-bold" id="checkout-total-btn">{{ number_format($total, 0, '.', ' ') }} сум</span>
-                                        </button>
+                                        <a href="{{ route('checkout.index') }}"
+                                           class="btn btn-primary btn-lg d-flex justify-content-between align-items-center checkout-button-final">
+
+                                            {{-- Текст слева --}}
+                                            <span>{{ __('Proceed to checkout') }}</span>
+
+                                            {{-- Цена справа (в одну строку) --}}
+                                            <span class="fw-bold">{{ number_format($total, 0, '.', ' ') }} сум</span>
+
+                                        </a>
                                     </div>
                                     <p><small>Размещая заказ, вы соглашаетесь с <a href="#!">Условиями обслуживания</a> и <a href="#!">Политикой конфиденциальности</a>.</small></p>
 

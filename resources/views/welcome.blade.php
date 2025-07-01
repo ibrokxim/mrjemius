@@ -1,7 +1,22 @@
 @extends('layouts.app')
 
 @section('title', 'Mr. Djemius Zero - Главная')
+@push('styles')
+    <style>
+        .banner-img {
+            width: 100%;
+            height: 650px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+        }
 
+        @media (max-width: 768px) {
+            .banner-img {
+                height: 350px; /* Меньше высота на телефонах */
+            }
+        }
+    </style>
+@endpush
 @section('content')
     <section class="mt-8">
         <div class="container">
@@ -12,9 +27,8 @@
                     background: url({{ asset('storage/' . $banner->banner_image_url) }}) no-repeat;
                     background-size: cover;
                     border-radius: 0.5rem;
-                    background-position: center;
-                    height: {{ $banner->height ?? 400 }}px;  {{-- Используем высоту из БД или 400px по умолчанию --}}
-                ">
+                    background-position: 30% 10%;
+                    height: {{ $banner->height ?? 400 }}px;  {{-- Используем высоту из БД или 400px по умолчанию --}}">
                             {{-- Здесь можно разместить текст поверх баннера, если нужно --}}
                         </div>
                     </a>
@@ -22,90 +36,330 @@
             </div>
         </div>
 
-    <section class="my-lg-14 my-8">
-        <div class="container">
-            {{-- Добавляем классы для выравнивания колонок и отступов между ними --}}
-            <div class="row g-4 justify-content-center">
-
-                {{-- Блок 1: Быстрая доставка --}}
-                <div class="col-lg-4 col-md-6">
-                    {{-- Добавляем классы для фона, отступов и скругления --}}
-                    <div class="card bg-light border-0 h-100 p-4 rounded-3">
-                        <div class="card-body">
-                            {{-- Используем Flexbox для выравнивания иконки и заголовка --}}
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="me-3">
-                                    <img src="{{ asset('assets/images/icons/clock.svg') }}" alt="Быстрая доставка" />
-                                </div>
-                                <h3 class="h5 mb-0">Быстрая доставка</h3>
-                            </div>
-                            <p>Получите ваш заказ с доставкой на дом в кратчайшие сроки.</p>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Блок 2: Широкий ассортимент --}}
-                <div class="col-lg-4 col-md-6">
-                    <div class="card bg-light border-0 h-100 p-4 rounded-3">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="me-3">
-                                    <img src="{{ asset('assets/images/icons/package.svg') }}" alt="Широкий ассортимент" />
-                                </div>
-                                <h3 class="h5 mb-0">Широкий ассортимент</h3>
-                            </div>
-                            <p>Выбирайте из 100+ товаров в различных категориях.</p>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Блок 3: Гарантия качества --}}
-                <div class="col-lg-4 col-md-6">
-                    <div class="card bg-light border-0 h-100 p-4 rounded-3">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="me-3">
-                                    <img src="{{ asset('assets/images/icons/refresh-cw.svg') }}" alt="Гарантия качества" />
-                                </div>
-                                <h3 class="h5 mb-0">Гарантия качествa</h3>
-                            </div>
-                            <p>Не довольны продуктом? Верните его при доставке и получите возврат средств.</p>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </section>
-    <!-- Секция Категорий -->
-    @if(isset($categories) && $categories->isNotEmpty())
-        <section class="mb-lg-10 mt-lg-14 my-8">
+        <section class="my-lg-14 my-8">
             <div class="container">
-                <div class="row">
-                    <div class="col-12 mb-6">
-                        <h3 class="mb-0">Популярные Категории</h3>
+                {{-- Десктоп версия - сетка --}}
+                <div class="row g-4 justify-content-center d-none d-md-flex">
+                    {{-- Блок 1: Быстрая доставка --}}
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card bg-light border-0 h-100 p-4 rounded-3">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="me-3">
+                                        <img src="{{ asset('assets/images/icons/clock.svg') }}" alt="Быстрая доставка" />
+                                    </div>
+                                    <h3 class="h5 mb-0">{{ __("Fast delivery") }}</h3>
+                                </div>
+                                <p>{{__('Fast delivery text')}}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Блок 2: Широкий ассортимент --}}
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card bg-light border-0 h-100 p-4 rounded-3">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="me-3">
+                                        <img src="{{ asset('assets/images/icons/package.svg') }}" alt="Широкий ассортимент" />
+                                    </div>
+                                    <h3 class="h5 mb-0">{{__('Assortiment')}}</h3>
+                                </div>
+                                <p>{{__('Assortiment tex')}}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Блок 3: Гарантия качества --}}
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card bg-light border-0 h-100 p-4 rounded-3">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="me-3">
+                                        <img src="{{ asset('assets/images/icons/refresh-cw.svg') }}" alt="Гарантия качества" />
+                                    </div>
+                                    <h3 class="h5 mb-0">{{__('Guaranty')}}</h3>
+                                </div>
+                                <p>{{__('Guaranty text')}}</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="category-slider">
-                    @foreach($categories as $category)
-                        <div class="item">
-                            <a href=" {{ route('category.show', $category->slug) }} " class="text-decoration-none text-inherit">
-                                <div class="card card-product mb-lg-4">
-                                    <div class="card-body text-center py-8">
 
-                                        <img src="{{ Storage::disk('public')->url($category->image_url) }}"
-                                             alt="{{ $category->name }}"
-                                             class="mb-3 img-fluid" style="height: 60px; object-fit: contain;" />
-                                        <div class="text-truncate">{{ $category->name }}</div>
+                {{-- Мобильная версия - слайдер --}}
+                <div class="features-mobile-slider d-block d-md-none">
+                    {{-- Блок 1: Быстрая доставка --}}
+                    <div class="item">
+                        <div class="card bg-light border-0 h-100 p-3 rounded-3 mx-2">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="me-3">
+                                        <img src="{{ asset('assets/images/icons/clock.svg') }}" alt="Быстрая доставка" style="width: 24px; height: 24px;" />
                                     </div>
+                                    <h3 class="h6 mb-0">{{ __("Fast delivery") }}</h3>
                                 </div>
-                            </a>
+                                <p class="small mb-0">{{__('Fast delivery text')}}</p>
+                            </div>
                         </div>
-                    @endforeach
+                    </div>
+
+                    {{-- Блок 2: Широкий ассортимент --}}
+                    <div class="item">
+                        <div class="card bg-light border-0 h-100 p-3 rounded-3 mx-2">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="me-3">
+                                        <img src="{{ asset('assets/images/icons/package.svg') }}" alt="Широкий ассортимент" style="width: 24px; height: 24px;" />
+                                    </div>
+                                    <h3 class="h6 mb-0">{{__('Assortiment')}}</h3>
+                                </div>
+                                <p class="small mb-0">{{__('Assortiment tex')}}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Блок 3: Гарантия качества --}}
+                    <div class="item">
+                        <div class="card bg-light border-0 h-100 p-3 rounded-3 mx-2">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="me-3">
+                                        <img src="{{ asset('assets/images/icons/refresh-cw.svg') }}" alt="Гарантия качества" style="width: 24px; height: 24px;" />
+                                    </div>
+                                    <h3 class="h6 mb-0">{{__('Guaranty')}}</h3>
+                                </div>
+                                <p class="small mb-0">{{__('Guaranty text')}}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
-    @endif
+
+        @push('styles')
+            <style>
+                /* Стили для мобильного слайдера преимуществ */
+                .features-mobile-slider .slick-slide {
+                    margin: 0 5px;
+                }
+
+                .features-mobile-slider .slick-list {
+                    margin: 0 -5px;
+                }
+
+                .features-mobile-slider .card {
+                    height: 100%;
+                    min-height: 140px;
+                }
+
+                /* Стрелки для мобильного слайдера */
+                .features-mobile-slider .slick-prev,
+                .features-mobile-slider .slick-next {
+                    display: none !important;
+                }
+
+                /* Точки навигации */
+                .features-mobile-slider .slick-dots {
+                    bottom: -35px;
+                    margin-top: 25px;
+                }
+
+                .features-mobile-slider .slick-dots li {
+                    margin: 0 3px;
+                }
+
+                .features-mobile-slider .slick-dots li button:before {
+                    font-size: 10px;
+                    color: #dee2e6;
+                }
+
+                .features-mobile-slider .slick-dots li.slick-active button:before {
+                    color: #28a745;
+                }
+            </style>
+        @endpush
+
+        @push('scripts')
+            <script>
+                $(document).ready(function () {
+                    // Инициализация слайдера преимуществ для мобильных устройств
+                    $('.features-mobile-slider').slick({
+                        slidesToShow: 1,
+                        slidesToScroll: 1,
+                        infinite: true,
+                        arrows: false,
+                        dots: true,
+                        centerMode: true,
+                        centerPadding: '20px',
+                        variableWidth: false,
+                        autoplay: true,
+                        autoplaySpeed: 4000,
+                        responsive: [
+                            {
+                                breakpoint: 768,
+                                settings: {
+                                    slidesToShow: 1,
+                                    centerMode: true,
+                                    centerPadding: '15px'
+                                }
+                            },
+                            {
+                                breakpoint: 576,
+                                settings: {
+                                    slidesToShow: 1,
+                                    centerMode: false,
+                                    centerPadding: '0px'
+                                }
+                            }
+                        ]
+                    });
+                });
+            </script>
+        @endpush
+
+        @push('styles')
+            <style>
+                /* Стили для мобильного слайдера преимуществ */
+                .features-mobile-slider .slick-slide {
+                    margin: 0 5px;
+                }
+
+                .features-mobile-slider .slick-list {
+                    margin: 0 -5px;
+                }
+
+                .features-mobile-slider .card {
+                    height: 100%;
+                    min-height: 140px;
+                }
+
+                /* Стрелки для мобильного слайдера */
+                .features-mobile-slider .slick-prev,
+                .features-mobile-slider .slick-next {
+                    display: none !important;
+                }
+
+                /* Точки навигации */
+                .features-mobile-slider .slick-dots {
+                    bottom: -35px;
+                    margin-top: 25px;
+                }
+
+                .features-mobile-slider .slick-dots li {
+                    margin: 0 3px;
+                }
+
+                .features-mobile-slider .slick-dots li button:before {
+                    font-size: 10px;
+                    color: #dee2e6;
+                }
+
+                .features-mobile-slider .slick-dots li.slick-active button:before {
+                    color: #28a745;
+                }
+            </style>
+        @endpush
+
+        @push('scripts')
+            <script>
+                $(document).ready(function () {
+                    // Инициализация слайдера преимуществ для мобильных устройств
+                    $('.features-mobile-slider').slick({
+                        slidesToShow: 1.2,
+                        slidesToScroll: 1,
+                        infinite: true,
+                        arrows: false,
+                        dots: true,
+                        centerMode: false,
+                        variableWidth: false,
+                        autoplay: true,
+                        autoplaySpeed: 4000,
+                        responsive: [
+                            {
+                                breakpoint: 480,
+                                settings: {
+                                    slidesToShow: 1.1,
+                                    slidesToScroll: 1
+                                }
+                            },
+                            {
+                                breakpoint: 400,
+                                settings: {
+                                    slidesToShow: 1,
+                                    slidesToScroll: 1
+                                }
+                            }
+                        ]
+                    });
+                });
+            </script>
+        @endpush
+        @if(isset($categories) && $categories->isNotEmpty())
+            <section class="mb-lg-10 mt-lg-14 my-8">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-12 mb-6">
+                            {{-- Используем __() для перевода, как и раньше --}}
+                            <h3 class="mb-0">{{ __('Popular categories') }}</h3>
+                        </div>
+                    </div>
+
+                    {{-- ИЗМЕНЕНИЯ ЗДЕСЬ: Возвращаем структуру с 4 колонками на десктопе --}}
+                    <div class="row g-4 row-cols-2 row-cols-lg-4">
+                        {{--         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                     g-4: Увеличили отступ между карточками
+                                     row-cols-2: На мобильных будет 2 колонки (как вы и хотели)
+                                     row-cols-lg-4: На больших экранах будет 4 колонки (как на вашем скриншоте)
+                        --}}
+
+                        @foreach($categories as $category)
+                            <div class="col">
+                                <a href="{{ route('category.show', $category->slug) }}" class="text-decoration-none text-inherit">
+                                    <div class="card card-product h-100">
+                                        {{-- Этот класс py-8 дает много "воздуха" внутри карточки, что и создает просторный вид --}}
+                                        <div class="card-body text-center py-8">
+                                            <img src="{{ Storage::disk('public')->url($category->image_url) }}"
+                                                 alt="{{ $category->name }}"
+                                                 class="mb-3 img-fluid" style="height: 60px; object-fit: contain;" />
+                                            <div class="text-truncate">{{ $category->name }}</div>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </section>
+        @endif
+    <!-- Секция Категорий -->
+{{--    @if(isset($categories) && $categories->isNotEmpty())--}}
+{{--        <section class="mb-lg-10 mt-lg-14 my-8">--}}
+{{--            <div class="container">--}}
+{{--                <div class="row">--}}
+{{--                    <div class="col-12 mb-6">--}}
+{{--                        <h3 class="mb-0">Популярные Категории</h3>--}}
+{{--                    </div>--}}
+{{--                </div>--}}
+{{--                <div class="category-slider">--}}
+{{--                    @foreach($categories as $category)--}}
+{{--                        <div class="item">--}}
+{{--                            <a href=" {{ route('category.show', $category->slug) }} " class="text-decoration-none text-inherit">--}}
+{{--                                <div class="card card-product mb-lg-4">--}}
+{{--                                    <div class="card-body text-center py-8">--}}
+
+{{--                                        <img src="{{ Storage::disk('public')->url($category->image_url) }}"--}}
+{{--                                             alt="{{ $category->name }}"--}}
+{{--                                             class="mb-3 img-fluid" style="height: 60px; object-fit: contain;" />--}}
+{{--                                        <div class="text-truncate">{{ $category->name }}</div>--}}
+{{--                                    </div>--}}
+{{--                                </div>--}}
+{{--                            </a>--}}
+{{--                        </div>--}}
+{{--                    @endforeach--}}
+{{--                </div>--}}
+{{--            </div>--}}
+{{--        </section>--}}
+{{--    @endif--}}
     <section>
 
     </section>
@@ -168,7 +422,7 @@
                 <div class="container">
                     <div class="row">
                         <div class="col-12 mb-6">
-                            <h3 class="mb-0">Продукты</h3>
+                            <h3 class="mb-0">{{__('Products')}}</h3>
                         </div>
                     </div>
 
@@ -183,7 +437,7 @@
 
                     <div class="row mt-8">
                         <div class="col-12 text-center">
-                            <a href="{{ route('category.show', 'dzemy') }}" class="btn btn-primary">Посмотреть все</a>
+                            <a href="{{ route('category.show', 'dzemy') }}" class="btn btn-primary">{{__('See all')}}</a>
                         </div>
                     </div>
                 </div>
@@ -462,6 +716,5 @@
                 });
             </script>
     @endpush
-
 
 @endsection

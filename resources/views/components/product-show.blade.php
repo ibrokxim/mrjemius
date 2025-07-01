@@ -202,7 +202,7 @@
 
                                 {{-- Краткий summary-блок ("квадрат") --}}
                                 <div class="p-3 border rounded-3 bg-light d-flex justify-content-around text-center flex-wrap gap-3">
-                                    @foreach (['ккал', 'белки', 'жиры', 'углеводы'] as $keyword)
+                                    @foreach (['белки', 'жиры', 'углеводы', 'ккал'] as $keyword)
                                         @if(isset($keySpecs[$keyword]))
                                             <div>
                                                 <div class="fw-bold fs-4">{{ $keySpecs[$keyword]['value'] }}</div>
@@ -308,11 +308,42 @@
                                 </div>
                             </div>
 
+                            {{-- НОВЫЙ КОД --}}
                             <div class="tab-pane fade" id="all-specs-tab-pane" role="tabpanel" aria-labelledby="all-specs-tab" tabindex="0">
                                 <div class="my-8">
+                                    @php
+                                        // 1. Определяем желаемый порядок ключей
+                                        $displayOrder = [
+                                            'Вес, г',
+                                            'Белки',
+                                            'Жиры',
+                                            'Углеводы',
+                                            'Энергетическая ценность',
+                                            'Пищевые волокна',
+                                            'Ккал'
+                                        ];
+                                        // 2. Создаем копию всех атрибутов, чтобы из нее удалять уже выведенные
+                                        $otherAttributes = $allAttributes;
+                                    @endphp
+
                                     <table class="table table-bordered table-striped">
                                         <tbody>
-                                        @foreach($allAttributes as $name => $value)
+                                        {{-- 3. Сначала выводим атрибуты в заданном порядке --}}
+                                        @foreach ($displayOrder as $specName)
+                                            @if (isset($allAttributes[$specName]))
+                                                <tr>
+                                                    <td class="fw-medium">{{ $specName }}</td>
+                                                    <td class="text-end">{{ $allAttributes[$specName] }}</td>
+                                                </tr>
+                                                @php
+                                                    // Удаляем выведенный атрибут из копии, чтобы не дублировать
+                                                    unset($otherAttributes[$specName]);
+                                                @endphp
+                                            @endif
+                                        @endforeach
+
+                                        {{-- 4. Теперь выводим все остальные атрибуты, которые не вошли в основной список --}}
+                                        @foreach ($otherAttributes as $name => $value)
                                             <tr>
                                                 <td class="fw-medium">{{ $name }}</td>
                                                 <td class="text-end">{{ $value }}</td>

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\WishlistController;
@@ -50,9 +51,13 @@ Route::middleware('auth')->prefix('checkout')->name('checkout.')->group(function
     Route::post('/place-order', [CheckoutController::class, 'store'])->name('store'); // Обработка заказа
 });
 
-Route::get('/order-success', function () {
-    return view('pages.order_success'); // Простая страница "Спасибо за заказ"
-})->name('order.success')->middleware('auth');
+Route::get('/order-success', [App\Http\Controllers\CheckoutController::class,'success'])->name('order.success')->middleware('auth');
 
 Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store')->middleware('auth');
 Route::get('/contacts', [PageController::class, 'contacts'])->name('contacts');
+
+// routes/web.php
+
+Route::get('language/{locale}', [LanguageController::class, 'switchLanguage'])->name('language.switch')->where('language', 'ru|uz');;
+
+

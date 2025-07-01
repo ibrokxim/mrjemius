@@ -48,6 +48,24 @@
 
                                 <h6 class="text-white-50 mt-4">E-mail</h6>
                                 <p><a href="mailto:mrdjemiuszero.uz@gmail.com" class="text-white text-decoration-none">mrdjemiuszero.uz@gmail.com</a></p>
+                                <ul class="list-inline">
+                                    <li class="list-inline-item me-1">
+                                        <a href="" class="btn btn-xs btn-social btn-icon">
+                                            {{-- SVG вашей иконки --}}
+                                            <i class="bi bi-facebook"></i>
+                                        </a>
+                                    </li>
+                                    <li class="list-inline-item me-1">
+                                        <a href="https://t.me/mrdjemiuszerouz" class="btn btn-xs btn-social btn-icon">
+                                            <i class="bi bi-telegram"></i>
+                                        </a>
+                                    </li>
+                                    <li class="list-inline-item">
+                                        <a href="https://www.instagram.com/mr.djemiuszero.uz" class="btn btn-xs btn-social btn-icon" aria-label="Instagram">
+                                            {{-- Замените SVG ниже на свой кастомный --}}
+                                            <i class="bi-instagram"></i>
+                                        </a>
+                                    </li>
                             </div>
                         </div>
                     </div>
@@ -70,7 +88,7 @@
             var myMap = new ymaps.Map("yandex-map", {
                 // Координаты центра карты.
                 // Порядок: [широта, долгота].
-                center: [59.924734, 30.360155], // Координаты для Лиговского пр., 50
+                center: [41.307782, 69.278711], // Координаты для Лиговского пр., 50
                 // Уровень масштабирования. Допустимые значения: от 0 (весь мир) до 19.
                 zoom: 16,
                 // Убираем лишние кнопки управления
@@ -78,7 +96,7 @@
             });
 
             // Создаем метку для офиса
-            var officePlacemark = new ymaps.Placemark([59.924734, 30.360155], {
+            var officePlacemark = new ymaps.Placemark([41.307782, 69.278711], {
                 // balloonContent: '<strong>Mr. Djemius Zero</strong><br>Центральный офис'
             }, {
                 // Опции.

@@ -79,13 +79,17 @@ class OrderResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('shipping_address_id')
                             ->label('Адрес доставки')
-                            ->relationship('shippingAddress', 'full_address')
+                            ->relationship('shippingAddress', 'address_line_1')
+                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_address)
+                            ->searchable(['address_line_1', 'city', 'postal_code'])
                             ->required(),
 
                         Forms\Components\Select::make('billing_address_id')
                             ->label('Адрес для счета')
-                            ->relationship('billingAddress', 'full_address')
-                            ->required(),
+                            ->relationship('billingAddress', 'address_line_1')
+                            ->getOptionLabelFromRecordUsing(fn ($record) => $record->full_address)
+                            ->searchable(['address_line_1', 'city', 'postal_code'])
+                            ->nullable(),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Суммы')

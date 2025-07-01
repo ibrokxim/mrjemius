@@ -2,28 +2,27 @@
 
 namespace App\Http\Controllers;
 
-
-use App\Events\OrderPlaced;
-use App\Models\Address;
 use App\Models\Order;
+use App\Models\Address;
 use App\Models\OrderItem;
-use App\Services\CartService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Services\CartService;
+use App\Services\TelegramService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class CheckoutController extends Controller
 {
     protected $cartService;
+    protected $telegramService;
 
-    public function __construct(CartService $cartService)
+    public function __construct(CartService $cartService, TelegramService $telegramService)
     {
         $this->cartService = $cartService;
+        $this->telegramService = $telegramService;
     }
 
-    /**
-     * Показать страницу оформления заказа
-     */
     public function index()
     {
         $user = Auth::user();
@@ -34,7 +33,7 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('error', 'Ваша корзина пуста.');
         }
 
-        // Получаем адреса пользователя
+
         $addresses = $user->addresses()->get();
 
         return view('pages.checkout', [
@@ -44,9 +43,6 @@ class CheckoutController extends Controller
         ]);
     }
 
-    /**
-     * Обработать и сохранить заказ
-     */
     public function store(Request $request)
     {
         $user = Auth::user();
@@ -54,49 +50,72 @@ class CheckoutController extends Controller
         $cartSummary = $this->cartService->getSummary();
 
         if ($cartItems->isEmpty()) {
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Ваша корзина пуста.'], 400);
+            }
             return back()->with('error', 'Ваша корзина пуста.');
         }
 
-        // ВАЛИДАЦИЯ ДАННЫХ ИЗ ФОРМЫ
+        // ИСПРАВЛЕНИЕ: Возвращаем full_name и phone_number в валидацию
         $validated = $request->validate([
             'full_name' => 'required|string|max:255',
             'phone_number' => 'required|string|max:20',
-            'address_line_1' => 'required|string|max:255',
-            'city' => 'required|string|max:100',
-            'postal_code' => 'required|string|max:20',
+            'delivery_method' => 'required|string|in:delivery,pickup',
+            'address_line_1' => 'required_if:delivery_method,delivery|nullable|string|max:255',
+            'city' => 'required_if:delivery_method,delivery|nullable|string|max:100',
+            'payment_method' => 'required|string|in:cash,card_online',
             'customer_notes' => 'nullable|string|max:1000',
-            'payment_method' => 'required|string|in:cash,card_online', // Пример
+            'address_option' => 'required_if:delivery_method,delivery|string',
+
+            // Поля нового адреса обязательны, ТОЛЬКО если выбрана опция "new"
         ]);
 
-        // Используем транзакцию, чтобы все операции были выполнены успешно или ни одной
+        $order = null;
         DB::beginTransaction();
         try {
-            // 1. Создать или обновить адрес доставки
-            $shippingAddress = Address::create([
-                'user_id' => $user->id,
-                'type' => 'shipping',
-                'full_name' => $validated['full_name'],
-                'phone_number' => $validated['phone_number'],
-                'address_line_1' => $validated['address_line_1'],
-                'city' => $validated['city'],
-                'postal_code' => $validated['postal_code'],
-                'country_code' => 'UZ', // Пример
-            ]);
+            $shippingAddressId = null;
 
-            // 2. Создать заказ
+            if ($validated['delivery_method'] === 'delivery') {
+
+                // 2. УСЛОВНАЯ ЛОГИКА: СОЗДАЕМ АДРЕС ИЛИ ИСПОЛЬЗУЕМ СУЩЕСТВУЮЩИЙ
+                if ($validated['address_option'] === 'new') {
+                    // Пользователь выбрал "Добавить новый адрес"
+                    $newAddress = Address::create([
+                        'user_id' => $user->id,
+                        'type' => 'shipping',
+                        'full_name' => $validated['full_name'],
+                        'phone_number' => $validated['phone_number'],
+                        'address_line_1' => $validated['address_line_1'],
+                        'city' => $validated['city'],
+                        'postal_code' => '000000', // Можно сделать необязательным
+                        'country_code' => 'UZ',
+                    ]);
+                    $shippingAddressId = $newAddress->id;
+                } else {
+                    // Пользователь выбрал существующий адрес. ID адреса находится в 'address_option'
+                    $addressId = $validated['address_option'];
+
+                    // Важная проверка безопасности: убеждаемся, что выбранный адрес принадлежит текущему пользователю
+                    $address = $user->addresses()->findOrFail($addressId);
+                    $shippingAddressId = $address->id;
+                }
+            }
+
+            // 3. Создаем заказ, используя полученный ID адреса
             $order = Order::create([
-                'order_number' => 'ORD-' . time() . '-' . $user->id, // Уникальный номер заказа
+                'order_number' => 'ORD-' . time() . '-' . $user->id,
                 'user_id' => $user->id,
-                'shipping_address_id' => $shippingAddress->id,
-                'status' => 'pending', // Начальный статус
-                'subtotal_amount' => $cartSummary['subtotal'],
-                'total_amount' => $cartSummary['total'],
-                'payment_method' => $validated['payment_method'],
+                'shipping_address_id' => $shippingAddressId, // <-- Используем ID
+                'status' => 'pending',
                 'payment_status' => 'pending',
+                'subtotal_amount' => $cartSummary['subtotal'],
+                'shipping_amount' => $cartSummary['shipping'] ?? 0,
+                'total_amount' => $cartSummary['total'],
+                'shipping_method' => $validated['delivery_method'],
+                'payment_method' => $validated['payment_method'],
                 'customer_notes' => $validated['customer_notes'],
             ]);
 
-            // 3. Добавить товары в заказ (Order Items)
             foreach ($cartItems as $item) {
                 OrderItem::create([
                     'order_id' => $order->id,
@@ -106,27 +125,47 @@ class CheckoutController extends Controller
                     'price_at_purchase' => $item->product->sell_price ?? $item->product->price,
                     'total_price' => ($item->product->sell_price ?? $item->product->price) * $item->quantity,
                 ]);
-
-                // 4. Уменьшить количество товара на складе
                 $item->product->decrement('stock_quantity', $item->quantity);
             }
 
-            // 5. Очистить корзину
-            $this->cartService->clear();
-
             DB::commit();
-            \Log::info("Заказ №{$order->id} создан. Сейчас будет вызвано событие OrderPlaced.");
-            event(new OrderPlaced($order));
-            \Log::info("Событие OrderPlaced для заказа №{$order->id} было вызвано.");
-            // Перенаправить на страницу успеха
-            return redirect()->route('order.success')->with('success', 'Ваш заказ успешно оформлен!');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            // Записать ошибку в лог
-            \Log::error('Ошибка оформления заказа: ' . $e->getMessage());
-            return back()->with('error', 'Произошла ошибка при оформлении заказа. Пожалуйста, попробуйте снова.');
+            Log::error('Ошибка при создании заказа: ' . $e->getMessage());
+            if ($request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Не удалось создать заказ. Попробуйте снова.'], 500);
+            }
+            return back()->with('error', 'Произошла ошибка при создании заказа.');
         }
+
+        // --- Определяем, что делать дальше, в зависимости от способа оплаты ---
+
+        if ($validated['payment_method'] === 'card_online') {
+            // ОПЛАТА КАРТОЙ: Возвращаем JSON для редиректа на Payme
+            return response()->json([
+                'success' => true,
+                'amount' => $order->total_amount * 100,
+                'order_id' => $order->id,
+            ]);
+        } else {
+            // ОПЛАТА НАЛИЧНЫМИ: Обновляем статус, отправляем уведомления и чистим корзину
+            $order->update(['status' => 'processing']);
+
+            $this->telegramService->sendOrderNotifications($order);
+
+            $this->cartService->clear();
+
+            return redirect()->route('order.success')->with([
+                'success' => 'Ваш заказ принят в обработку!',
+                'order_number' => $order->order_number
+            ]);
+        }
+    }
+
+    public function success()
+    {
+        return view('pages.order_success');
     }
 
 }

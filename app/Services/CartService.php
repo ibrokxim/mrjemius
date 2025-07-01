@@ -11,12 +11,10 @@ class CartService
     public function getItems(): Collection
     {
         if (Auth::check()) {
-            // Для авторизованных пользователей берем из базы данных
             return Auth::user()->cartItems()->with('product.primaryImage')->get();
         }
 
-        // Для гостей можно реализовать логику с сессией, но для начала сфокусируемся на авторизованных
-        return collect(); // Возвращаем пустую коллекцию для гостей
+        return collect();
     }
 
     /**
@@ -120,17 +118,34 @@ class CartService
             return ($item->product->sell_price ?? $item->product->price) * $item->quantity;
         });
 
-        // Здесь можно добавить логику для скидок, доставки и т.д.
-        $shippingCost = 0; // Пример
-        $discount = 0;     // Пример
+        $freeShippingThreshold = 500000;
+        $shippingCost = 15000;
 
-        $total = $subtotal + $shippingCost - $discount;
+        $actualShippingCost = 0; // По умолчанию доставка бесплатная
+        if ($subtotal > 0 && $subtotal < $freeShippingThreshold) {
+            // Добавляем стоимость доставки, ТОЛЬКО если порог не достигнут
+            $actualShippingCost = $shippingCost;
+        }
+
+        // Здесь можно добавить логику для скидок, если она появится в будущем
+        $discount = 0;
+
+        // 4. Считаем итоговую сумму с учетом доставки и скидок
+        $total = $subtotal + $actualShippingCost - $discount;
+
+        // 5. Сколько осталось до бесплатной доставки (для отображения в корзине)
+        $needsForFreeShipping = max(0, $freeShippingThreshold - $subtotal);
+
 
         return [
             'subtotal' => $subtotal,
             'shipping' => $shippingCost,
             'discount' => $discount,
             'total' => $total,
+            'needsForFreeShipping' => $needsForFreeShipping,
+            'freeShippingThreshold' => $freeShippingThreshold,
+            'items' => $cartItems,
+            'count' => $cartItems->sum('quantity')
         ];
     }
 
