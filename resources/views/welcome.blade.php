@@ -19,22 +19,87 @@
 @endpush
 @section('content')
     <section class="mt-8">
-        <div class="container">
-            <div class="hero-slider">
-                @foreach($banners as $banner)
-                    <a href="{{ $banner->link_url ?? '#' }}" style="display: block;">
-                        <div style="
-                    background: url({{ asset('storage/' . $banner->banner_image_url) }}) no-repeat;
+        @if($banners->isNotEmpty())
+            <div class="container my-4">
+            {{-- Стили для адаптивности баннеров.
+                 Их можно вынести в ваш основной CSS-файл (например, public/css/app.css),
+                 чтобы не держать их прямо в Blade-файле. --}}
+            <style>
+                .adaptive-banner {
+                    display: block;
                     background-size: cover;
-                    border-radius: 0.5rem;
-                    background-position: 30% 10%;
-                    height: {{ $banner->height ?? 400 }}px;  {{-- Используем высоту из БД или 400px по умолчанию --}}">
-                            {{-- Здесь можно разместить текст поверх баннера, если нужно --}}
+                    border-radius: 0.5rem; /* или любая другая форма скругления */
+                    text-decoration: none;
+                    overflow: hidden;
+                    position: relative; /* Необходимо для позиционирования текста поверх */
+                }
+
+                /* Стили по умолчанию (для мобильных) */
+                .adaptive-banner {
+                    background-image: var(--mobile-bg-image);
+                    background-position: var(--mobile-bg-position, center center);
+                    height: var(--mobile-height, 350px);
+                }
+
+                /* Стили для десктопа (например, от 768px и выше) */
+                @media (min-width: 768px) {
+                    .adaptive-banner {
+                        background-image: var(--desktop-bg-image);
+                        background-position: var(--desktop-bg-position, center center);
+                        height: var(--desktop-height, 400px);
+                    }
+                }
+
+                /* Стили для текста поверх баннера (опционально) */
+                .adaptive-banner__title {
+                    position: absolute;
+                    bottom: 20px;
+                    left: 20px;
+                    color: white;
+                    font-size: 2rem;
+                    font-weight: bold;
+                    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7);
+                    max-width: 80%;
+                }
+
+                @media (min-width: 768px) {
+                    .adaptive-banner__title {
+                        bottom: 40px;
+                        left: 40px;
+                        font-size: 3rem;
+                        max-width: 60%;
+                    }
+                }
+            </style>
+
+            {{-- Контейнер для слайдера.
+                 Убедитесь, что у вас подключена библиотека для слайдера, например, Slick Slider или Swiper.js
+                 Я использую класс "hero-slider", который вы упоминали ранее. --}}
+                <div class="hero-slider">
+                    @foreach($banners as $banner)
+                        <div class="slider-item"> {{-- Обертка для каждого слайда --}}
+                            <a
+                                class="adaptive-banner"
+                                @if(!empty($banner->link_url)) href="{{ $banner->link_url }}" @endif
+                                style="
+                            --desktop-bg-image: url({{ asset('storage/' . $banner->desktop_image_url) }});
+                            --mobile-bg-image: url({{ asset('storage/' . $banner->mobile_image_url) }});
+                            --desktop-bg-position: {{ $banner->desktop_bg_position }};
+                            --mobile-bg-position: {{ $banner->mobile_bg_position }};
+                            --desktop-height: {{ $banner->desktop_height }}px;
+                            --mobile-height: {{ $banner->mobile_height }}px;
+                        "
+                            >
+                                {{-- Если у баннера есть заголовок, выводим его поверх изображения --}}
+    {{--                            @if($banner->title)--}}
+    {{--                                <h2 class="adaptive-banner__title">{{ $banner->title }}</h2>--}}
+    {{--                            @endif--}}
+                            </a>
                         </div>
-                    </a>
-                @endforeach
+                    @endforeach
+                </div>
             </div>
-        </div>
+        @endif
 
         <section class="my-lg-14 my-8">
             <div class="container">
@@ -584,7 +649,7 @@
                                     <span class="fw-bold">30%</span>
 
                                 </p>
-                                <a href="https://www.grechkafood.uz/" class="btn btn-dark">Перейти </a>
+                                <a href="https://www.grechkafood.uz/" class="btn btn-dark">О компании </a>
                             </div>
                         </div>
                     </div>

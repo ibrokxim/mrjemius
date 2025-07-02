@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SearchController;
@@ -17,6 +18,8 @@ use App\Http\Controllers\TelegramAuthController;
 
 Route::get('/', [BaseController::class, 'returnWelcomePage'])->name('welcome');
 Route::get('/about', [PageController::class, 'about'])->name('about');
+Route::post('/feedback/store', [FeedbackController::class, 'store'])->name('feedback.store');
+
 
 Route::get('/category/{category:slug}', [CategoryController::class, 'show'])->name('category.show');
 Route::get('/products/{product:slug}', [ProductController::class,'show'])->name('product.show');
@@ -28,7 +31,7 @@ Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{post:slug}', [BlogController::class, 'show'])->name('blog.show');
 
 Route::middleware('auth')->prefix('wishlist')->name('wishlist.')->group(function () {
-    Route::get('/', [WishlistController::class, 'index'])->name('index');
+   // Route::get('/', [WishlistController::class, 'index'])->name('index');
     Route::get('/wishlist', [WishlistController::class, 'index'])->name('index');
     Route::post('/wishlist/toggle/{product}', [WishlistController::class, 'toggle'])->name('toggle');
 });
@@ -50,6 +53,8 @@ Route::middleware('auth')->prefix('checkout')->name('checkout.')->group(function
     Route::get('/', [CheckoutController::class, 'index'])->name('index'); // Страница оформления
     Route::post('/place-order', [CheckoutController::class, 'store'])->name('store'); // Обработка заказа
 });
+
+Route::post('/cart/set-delivery-method', [CartController::class, 'setDeliveryMethod'])->name('cart.setDeliveryMethod')->middleware('auth');
 
 Route::get('/order-success', [App\Http\Controllers\CheckoutController::class,'success'])->name('order.success')->middleware('auth');
 

@@ -91,7 +91,7 @@ class PaymeController extends Controller
                 ]
             ]]);
         }
-        if ((int)($order->total_amount) != (int)$params['amount']) {
+        if ((int)($order->total_amount ) != (int)$params['amount']) {
             return response()->json(['id' => $id, 'error' => ['code' => -31001, 'message' =>
                 [
                     'ru' => 'Неверная сумма.',

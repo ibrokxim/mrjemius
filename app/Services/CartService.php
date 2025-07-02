@@ -109,43 +109,28 @@ class CartService
      *
      * @return array
      */
-    public function getSummary(): array
+    public function getSummary(string $deliveryMethod = 'delivery'): array
     {
         $cartItems = $this->getItems();
+        $subtotal = $cartItems->sum(fn($item) => ($item->product->sell_price ?? $item->product->price) * $item->quantity);
 
-        $subtotal = $cartItems->sum(function ($item) {
-            // Сумма всех товаров
-            return ($item->product->sell_price ?? $item->product->price) * $item->quantity;
-        });
+        $freeShippingThreshold = config('cart.free_shipping_threshold', 500000);
+        $baseShippingCost = config('cart.shipping_cost', 20000);
 
-        $freeShippingThreshold = 500000;
-        $shippingCost = 15000;
+        $actualShippingCost = ($subtotal > 0 && $subtotal < $freeShippingThreshold) ? $baseShippingCost : 0;
 
-        $actualShippingCost = 0; // По умолчанию доставка бесплатная
-        if ($subtotal > 0 && $subtotal < $freeShippingThreshold) {
-            // Добавляем стоимость доставки, ТОЛЬКО если порог не достигнут
-            $actualShippingCost = $shippingCost;
-        }
-
-        // Здесь можно добавить логику для скидок, если она появится в будущем
-        $discount = 0;
-
-        // 4. Считаем итоговую сумму с учетом доставки и скидок
-        $total = $subtotal + $actualShippingCost - $discount;
-
-        // 5. Сколько осталось до бесплатной доставки (для отображения в корзине)
+        $total = $subtotal + $actualShippingCost;
         $needsForFreeShipping = max(0, $freeShippingThreshold - $subtotal);
 
-
         return [
+            'items' => $cartItems,
+            'count' => $cartItems->sum('quantity'),
             'subtotal' => $subtotal,
-            'shipping' => $shippingCost,
-            'discount' => $discount,
+            'shipping' => $actualShippingCost,
+            'baseShippingCost' => $baseShippingCost, // Оставляем на всякий случай
             'total' => $total,
             'needsForFreeShipping' => $needsForFreeShipping,
             'freeShippingThreshold' => $freeShippingThreshold,
-            'items' => $cartItems,
-            'count' => $cartItems->sum('quantity')
         ];
     }
 

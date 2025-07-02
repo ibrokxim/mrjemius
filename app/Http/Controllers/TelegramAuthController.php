@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\CartService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class TelegramAuthController extends Controller
 {
@@ -18,7 +19,9 @@ class TelegramAuthController extends Controller
     public function handle(Request $request)
     {
         $data = $request->all();
+        Log::info('Telegram Auth Data Received:', $data);
         if (!$this->checkTelegramAuth($data)) {
+            Log::error('Telegram Auth Check FAILED.');
             abort(403, 'Данные не прошли проверку');
         }
 
@@ -43,22 +46,42 @@ class TelegramAuthController extends Controller
         return redirect('/'); // Куда перенаправить
     }
 
-    private function checkTelegramAuth(array $data): bool
+    private function checkTelegramAuth(array $auth_data): bool
     {
-        $check_hash = $data['hash'];
-        unset($data['hash']);
-        ksort($data);
-
-        $data_check_arr = [];
-        foreach ($data as $key => $value) {
-            $data_check_arr[] = "$key=$value";
+        // 1. Проверяем, что хэш вообще пришел
+        if (!isset($auth_data['hash'])) {
+            \Log::error('Telegram Auth: Hash not found in received data.');
+            return false;
         }
 
+        $check_hash = $auth_data['hash'];
+
+        // 2. Создаем массив данных для проверки, включая только нужные поля
+        $data_check_arr = [];
+        foreach ($auth_data as $key => $value) {
+            // Исключаем hash из массива для проверки
+            if ($key !== 'hash') {
+                $data_check_arr[] = $key . '=' . $value;
+            }
+        }
+
+        sort($data_check_arr);
+
         $data_check_string = implode("\n", $data_check_arr);
+
         $secret_key = hash('sha256', env('TELEGRAM_BOT_TOKEN'), true);
         $hash = hash_hmac('sha256', $data_check_string, $secret_key);
 
-        return hash_equals($hash, $check_hash);
+        $is_valid = hash_equals($hash, $check_hash);
+        if (!$is_valid) {
+            \Log::error('Telegram Auth Hash Mismatch.', [
+                'expected_hash' => $hash,
+                'received_hash' => $check_hash,
+                'check_string' => $data_check_string,
+            ]);
+        }
+
+        return $is_valid;
     }
 
 }

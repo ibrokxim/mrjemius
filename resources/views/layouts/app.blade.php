@@ -20,7 +20,9 @@
 
     <!-- Theme CSS -->
     <link rel="stylesheet" href="{{ asset('assets/css/theme.min.css') }}" />
-    <script src="//code.jivo.ru/widget/UgOFHdeQxC" async></script>
+    <script src="//code.jivo.ru/widget/XAsl12rHFk" async></script>
+
+
     {{-- Скрипты аналитики --}}
 {{--    @include('partials.analytics')--}}
 
@@ -45,6 +47,7 @@
 @include('partials.modals.location_modal')
 @include('partials.modals.quick_view_modal')
 @include('partials.shop_cart_offcanvas')
+@include('partials.modals.contact_modal')
 
 <!-- Libs JS -->
 <script src="{{ asset('assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
@@ -64,5 +67,56 @@
 <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
 @stack('scripts')
 <script src="{{ asset('assets/js/theme.min.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sendContactBtn = document.getElementById('sendContactFormBtn');
+        const contactForm = document.getElementById('contact-form');
+        const contactModalEl = document.getElementById('contactModal');
+
+        if (sendContactBtn && contactForm && contactModalEl) {
+            sendContactBtn.addEventListener('click', async function() {
+                const formData = new FormData(contactForm);
+                const button = this;
+
+                button.disabled = true;
+                button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Отправка...';
+
+                try {
+                    // Убедитесь, что роут правильный
+                    const response = await fetch("{{ route('feedback.store') }}", {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        const modal = bootstrap.Modal.getInstance(contactModalEl);
+                        if (modal) modal.hide();
+                        contactForm.reset();
+                        alert('Спасибо! Мы скоро с вами свяжемся.');
+                    } else {
+                        // Показываем ошибки валидации или другие
+                        let errorMessage = data.message || 'Произошла ошибка.';
+                        if (data.errors) {
+                            errorMessage = Object.values(data.errors).flat().join('\n');
+                        }
+                        alert(errorMessage);
+                    }
+                } catch (error) {
+                    console.error('Ошибка отправки формы:', error);
+                    alert('Не удалось отправить форму. Попробуйте позже.');
+                } finally {
+                    button.disabled = false;
+                    button.textContent = 'Отправить';
+                }
+            });
+        }
+    });
+</script>
 </body>
 </html>

@@ -81,11 +81,21 @@ class TelegramService
             Log::warning("Не удалось отправить уведомление клиенту для заказа №{$order->order_number}: отсутствует telegram_chat_id.");
             return;
         }
-
+        $paymentMethodText = '';
+        if ($order->payment_method === 'cash') {
+            $paymentMethodText = 'Наличными при получении';
+        } elseif ($order->payment_method === 'card_online') {
+            $paymentMethodText = 'Картой онлайн (оплачено)'; // Или любой другой подходящий текст
+        } else {
+            // На случай, если появятся другие методы
+            $paymentMethodText = $order->payment_method;
+        }
         $clientMessage = "Здравствуйте, {$user->name}!\n\n";
         $clientMessage .= "Ваш заказ **№{$order->order_number}** успешно оформлен.\n\n";
         $clientMessage .= "Сумма заказа: **" . number_format($order->total_amount, 0, '.', ' ') . " сум**.\n";
+        $clientMessage .= "Тип оплаты: {$paymentMethodText}\n\n";
         $clientMessage .= "Мы скоро свяжемся с вами для подтверждения.\n\n";
+        $clientMessage .= "Если у вас возникнут какие-либо вопросы, пожалуйста, звоните по номеру: +998 77 132 77 00\n\n";
         $clientMessage .= "Спасибо за покупку!";
 
         try {
@@ -117,5 +127,36 @@ class TelegramService
         $escapeChars = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!'];
 
         return str_replace($escapeChars, array_map(fn($char) => '\\' . $char, $escapeChars), $text);
+    }
+
+    public function sendFeedbackNotification(string $name, string $phone): void
+    {
+        $adminChatId = -4857413796 ;
+        if (!$adminChatId) {
+            Log::warning("Не удалось отправить заявку: TELEGRAM_ADMIN_CHAT_ID не установлен.");
+            return;
+        }
+
+        // Экранируем данные от пользователя
+        $safeName = $this->escapeMarkdown($name);
+        $safePhone = $this->escapeMarkdown($phone);
+
+        // Формируем сообщение
+        $message = "📞 **Заявка на обратный звонок\\!**\n\n";
+        $message .= "👤 **Имя:** {$safeName}\n";
+        $message .= "📱 **Телефон:** `{$safePhone}`"; // В `code` блоке для удобного копирования
+
+        try {
+            Telegram::sendMessage([
+                'chat_id' => $adminChatId,
+                'text' => $message,
+                'parse_mode' => 'MarkdownV2'
+            ]);
+            Log::info("Уведомление об обратной связи от {$safeName} успешно отправлено.");
+        } catch (\Exception $e) {
+            Log::error("Ошибка отправки уведомления об обратной связи: " . $e->getMessage());
+            // Перебрасываем исключение, чтобы контроллер знал об ошибке
+            throw $e;
+        }
     }
 }

@@ -35,11 +35,12 @@ class CheckoutController extends Controller
 
 
         $addresses = $user->addresses()->get();
-
+        $deliveryMethod = session('delivery_method', 'delivery');
         return view('pages.checkout', [
             'cartItems' => $cartItems,
             'cartSummary' => $cartSummary,
             'addresses' => $addresses,
+            'deliveryMethod' => $deliveryMethod,
         ]);
     }
 
@@ -61,13 +62,14 @@ class CheckoutController extends Controller
             'full_name' => 'required|string|max:255',
             'phone_number' => 'required|string|max:20',
             'delivery_method' => 'required|string|in:delivery,pickup',
-            'address_line_1' => 'required_if:delivery_method,delivery|nullable|string|max:255',
-            'city' => 'required_if:delivery_method,delivery|nullable|string|max:100',
+            'address_line_1' => 'required_if:address_option,new|nullable|string|max:255',
+            'city' => 'required_if:address_option,new|nullable|string|max:100',
             'payment_method' => 'required|string|in:cash,card_online',
             'customer_notes' => 'nullable|string|max:1000',
             'address_option' => 'required_if:delivery_method,delivery|string',
 
             // Поля нового адреса обязательны, ТОЛЬКО если выбрана опция "new"
+
         ]);
 
         $order = null;
@@ -145,8 +147,9 @@ class CheckoutController extends Controller
             // ОПЛАТА КАРТОЙ: Возвращаем JSON для редиректа на Payme
             return response()->json([
                 'success' => true,
-                'amount' => $order->total_amount * 100,
+                'amount' => $order->total_amount ,
                 'order_id' => $order->id,
+                'user_id' => $order->user_id
             ]);
         } else {
             // ОПЛАТА НАЛИЧНЫМИ: Обновляем статус, отправляем уведомления и чистим корзину

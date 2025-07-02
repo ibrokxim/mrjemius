@@ -41,7 +41,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 \App\Filament\Widgets\CartWishlistStatsWidget::class,
 //                Widgets\AccountWidget::class,
-//                Widgets\FilamentInfoWidget::class,
+  //              Widgets\FilamentInfoWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

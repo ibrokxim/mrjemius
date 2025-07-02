@@ -16,7 +16,6 @@ use Illuminate\Support\Facades\Session;
 class CartController extends Controller
 {
      protected $cartService;
-
     public function __construct(CartService $cartService)
     {
         $this->cartService = $cartService;
@@ -33,10 +32,13 @@ class CartController extends Controller
             'total' => $cartSummary['total'],
             'freeShippingThreshold' => $cartSummary['freeShippingThreshold'],
             'needsForFreeShipping' => $cartSummary['needsForFreeShipping'],
+            'baseShippingCost' => $cartSummary['baseShippingCost'],
         ]);
     }
 
-
+    /**
+     * Добавление товара в корзину
+     */
     public function add(Request $request, Product $product): JsonResponse
     {
         $request->validate([
@@ -115,38 +117,43 @@ class CartController extends Controller
      */
     public function update(Request $request, CartItem $cartItem): JsonResponse
     {
-        $request->validate([
-            'quantity' => 'required|integer|min:1|max:100'
+        // 1. Валидация входящих данных
+        $validated = $request->validate([
+            'quantity' => 'required|integer|min:1|max:100' // Ограничиваем максимальное количество для безопасности
         ]);
+        $quantity = $validated['quantity'];
 
-        $quantity = $request->get('quantity');
-
-        // Проверяем права доступа
+        // 2. Проверка прав доступа: может ли текущий пользователь изменять этот элемент корзины?
         if (!$this->canAccessCartItem($cartItem)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Нет доступа к данному элементу корзины'
-            ], 403);
+                'message' => 'Нет доступа к данному элементу корзины.'
+            ], 403); // 403 Forbidden
         }
 
-        // Проверяем наличие на складе
+        // 3. Проверка наличия товара на складе
         if ($cartItem->product->stock_quantity < $quantity) {
             return response()->json([
                 'success' => false,
                 'message' => 'Недостаточно товара на складе. Доступно: ' . $cartItem->product->stock_quantity
-            ], 400);
+            ], 422); // 422 Unprocessable Entity
         }
 
+        // 4. Обновляем количество в базе данных
         $cartItem->update(['quantity' => $quantity]);
 
-        $newTotal = $this->getCartTotal();
+        // 5. Получаем свежие итоговые данные по ВСЕЙ корзине через сервис
+        $summary = $this->cartService->getSummary();
+
+        // 6. Отдельно считаем новую сумму для конкретного измененного товара
         $itemTotal = ($cartItem->product->sell_price ?? $cartItem->product->price) * $quantity;
 
+        // 7. Возвращаем успешный ответ со всеми необходимыми данными для обновления UI
         return response()->json([
             'success' => true,
             'message' => 'Количество обновлено',
-            'item_total' => number_format($itemTotal, 0, ',', ' '),
-            'cart_total' => number_format($newTotal, 0, ',', ' ')
+            'summary' => $summary, // <--- КЛЮЧЕВОЙ ОБЪЕКТ С ИТОГАМИ ДЛЯ JS
+            'item_total_formatted' => number_format($itemTotal, 0, '.', ' '), // Отформатированная сумма для этого товара
         ]);
     }
 
@@ -155,24 +162,25 @@ class CartController extends Controller
      */
     public function remove(CartItem $cartItem): JsonResponse
     {
-        // Проверяем права доступа
+        // 1. Проверка прав доступа
         if (!$this->canAccessCartItem($cartItem)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Нет доступа к данному элементу корзины'
-            ], 403);
+                'message' => 'Нет доступа к данному элементу корзины.'
+            ], 403); // 403 Forbidden
         }
 
+        // 2. Удаляем товар из базы данных
         $cartItem->delete();
 
-        $cartCount = $this->getCartCount();
-        $newTotal = $this->getCartTotal();
+        // 3. Получаем свежие итоговые данные по ВСЕЙ корзине после удаления
+        $summary = $this->cartService->getSummary();
 
+        // 4. Возвращаем успешный ответ с новыми итогами
         return response()->json([
             'success' => true,
             'message' => 'Товар удален из корзины',
-            'cart_count' => $cartCount,
-            'cart_total' => number_format($newTotal, 0, ',', ' ')
+            'summary' => $summary, // <--- КЛЮЧЕВОЙ ОБЪЕКТ С ИТОГАМИ ДЛЯ JS
         ]);
     }
 
@@ -410,5 +418,14 @@ class CartController extends Controller
                 }
             }
         });
+    }
+    public function setDeliveryMethod(Request $request)
+    {
+        $validated = $request->validate([
+            'delivery_method' => 'required|string|in:delivery,pickup',
+        ]);
+        session(['delivery_method' => $validated['delivery_method']]);
+
+        return response()->json(['success' => true]);
     }
 }

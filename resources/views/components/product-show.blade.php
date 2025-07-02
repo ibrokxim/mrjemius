@@ -634,7 +634,7 @@
             if (whatsappLink) {
                 whatsappLink.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
             }
-            // ... и так далее для других соцсетей ...
+
         });
     </script>
 @endpush

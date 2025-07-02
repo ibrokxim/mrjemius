@@ -2,36 +2,30 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Forms\Components\Fieldset;
-use Filament\Tables;
+use App\Filament\Resources\BannerResource\Pages;
 use App\Models\Banner;
+use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
-use Filament\Tables\Columns\BooleanColumn;
+use Filament\Resources\Concerns\Translatable;
+use Filament\Resources\Resource;
+use Filament\Tables;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
-use Filament\Resources\Resource;
-use App\Filament\Resources\BannerResource\Pages;
-use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
-use App\Filament\Resources\BannerResource\RelationManagers;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use Filament\Resources\Concerns\Translatable;
-use Intervention\Image\Image;
+use Illuminate\Support\HtmlString;
 
 class BannerResource extends Resource
 {
     use Translatable;
 
     protected static ?string $model = Banner::class;
-    protected static ?string $pluralModelLabel = 'Акции и баннеры'; // Название модели во множественном числе
-
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $pluralModelLabel = 'Акции и баннеры';
+    protected static ?string $navigationIcon = 'heroicon-o-photo';
 
     public static function form(Form $form): Form
     {
@@ -40,142 +34,131 @@ class BannerResource extends Resource
                 Section::make('Основная информация')
                     ->columns(2)
                     ->schema([
-                        TextInput::make('title') // Это поле теперь будет иметь переключатель языков
-                        ->label('Заголовок баннера')
+                        TextInput::make('title')
+                            ->label('Заголовок баннера')
                             ->required()
                             ->maxLength(255)
-                            ->columnSpanFull()
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(fn (callable $set, ?string $state) => $set('slug', Str::slug($state))), // Slug будет генерироваться из текущего выбранного языка
+                            ->columnSpanFull(),
 
-                        TextInput::make('slug')
-                            ->label('Slug (ЧПУ)')
-                            ->maxLength(255)
-                            ->unique(Banner::class, 'slug', ignoreRecord: true)
-                            ->nullable(),
+                        TextInput::make('link_url')
+                            ->label('URL-ссылка (куда ведет баннер)')
+                            ->url()
+                            ->placeholder('https://example.com/product/123')
+                            ->helperText('Если оставить пустым, баннер не будет кликабельным.')
+                            ->columnSpanFull(),
 
-                        DateTimePicker::make('start_date')
-                            ->label('Дата начала показа')
-                            ->nullable(),
-
-                        DateTimePicker::make('end_date')
-                            ->label('Дата окончания показа')
-                            ->nullable(),
-
-                        FileUpload::make('banner_image_url')
-                            ->label('Изображение баннера')
-                            ->image()
-                            ->directory('banner-images')
-                            ->visibility('public')
-                            ->nullable()
-                            ->afterStateUpdated(fn ($state) => \Log::info('Загружен файл:', ['state' => $state])),
-                        Fieldset::make('Размеры изображения (необязательно)')
-                            ->schema([
-                                TextInput::make('width')
-                                    ->label('Ширина (в пикселях)')
-                                    ->numeric()
-                                    ->suffix('px') // Добавляет "px" после поля для наглядности
-                                    ->nullable(),
-
-                                TextInput::make('height')
-                                    ->label('Высота (в пикселях)')
-                                    ->numeric()
-                                    ->suffix('px')
-                                    ->nullable(),
-                            ])
-                            ->columns(2),
-                        Toggle::make('is_active')
-                            ->label('Активен')
-                            ->default(true),
+                        Textarea::make('description')
+                            ->label('Описание (для себя)')
+                            ->columnSpanFull(),
                     ]),
-                Section::make('Описание')
+
+                Section::make('Настройка отображения')
+                    ->description('Здесь вы можете управлять тем, как баннер будет выглядеть на разных устройствах.')
                     ->schema([
-                        RichEditor::make('description') // Это поле тоже будет иметь переключатель языков
-                        ->label('Описание баннера')
-                            ->columnSpanFull()
-                            ->nullable(),
-                    ])
+                        // --- НАША ШПАРГАЛКА ---
+                        Placeholder::make('info_placeholder')
+                            ->label('Краткая инструкция')
+                            ->content(new HtmlString(
+                                '<ul>' .
+                                '<li><strong>Точка фокуса:</strong> Укажите, какая часть изображения самая важная. Она всегда будет оставаться в центре.</li>' .
+                                '<li><strong>Высота блока:</strong> Увеличьте это значение, чтобы в баннер "поместилось" больше изображения по вертикали (эффект "отдаления").</li>' .
+                                '</ul>'
+                            )),
+                    ]),
+
+                Section::make('Изображение для десктопа (широкое)')
+                    ->description('Рекомендуемый размер: 1920x500 пикселей.')
+                    ->collapsible() // Секцию можно будет сворачивать
+                    ->schema([
+                        FileUpload::make('desktop_image_url')
+                            ->label('Загрузить изображение')
+                            ->image()
+                            ->directory('banners/desktop') // Изображения будут сохраняться в storage/app/public/banners/desktop
+                            ->required()
+                            ->columnSpanFull(),
+                        TextInput::make('desktop_height')
+                            ->label('Высота блока (в пикселях, для десктопа)')
+                            ->numeric()
+                            ->default(400),
+
+                        TextInput::make('desktop_bg_position')
+                            ->label('Точка фокуса (для десктопа)')
+                            ->placeholder('center center')
+                            ->default('center center')
+                            ->helperText(new HtmlString('<b>Популярные значения:</b><br>' .
+                                '<code>center center</code> - центр картинки<br>' .
+                                '<code>center top</code> - центр по ширине, верх по высоте<br>' .
+                                '<code>center bottom</code> - центр по ширине, низ по высоте<br>' .
+                                '<code>50% 25%</code> - тонкая настройка (X и Y)'))
+                    ])->columns(2),
+
+
+                Section::make('Изображение для мобильных (квадратное или вертикальное)')
+                    ->description('Рекомендуемый размер: 800x800 или 800x1000 пикселей.')
+                    ->collapsible()
+                    ->schema([
+                        FileUpload::make('mobile_image_url')
+                            ->label('Загрузить изображение')
+                            ->image()
+                            ->directory('banners/mobile')
+                            ->required()
+                            ->columnSpanFull(),
+                        TextInput::make('mobile_height')
+                            ->label('Высота блока (в пикселях, для мобильных)')
+                            ->numeric()
+                            ->default(350)
+                            ->required(),
+
+
+                        TextInput::make('mobile_bg_position')
+                            ->label('Точка фокуса (для мобильных)')
+                            ->placeholder('center center')
+                            ->default('center center')
+                            ->required()
+                            ->helperText(new HtmlString('<b>Популярные значения:</b><br>' .
+                                '<code>center center</code> - центр картинки<br>' .
+                                '<code>center top</code> - центр по ширине, верх по высоте<br>' .
+                                '<code>center bottom</code> - центр по ширине, низ по высоте<br>' .
+                                '<code>50% 25%</code> - тонкая настройка (X и Y)'))
+                            ->required(),
+                    ])->columns(2),
             ]);
     }
 
-    protected static function mutateFormDataBeforeCreate(array $data): array
-    {
-        return self::processAndResizeImage($data);
-    }
-
-    // --- 3. МЕТОД ДЛЯ ОБРАБОТКИ ПЕРЕД ОБНОВЛЕНИЕМ ---
-    protected static function mutateFormDataBeforeUpdate(array $data): array
-    {
-        return self::processAndResizeImage($data);
-    }
-
-    /**
-     * Вспомогательный метод для обработки, обрезки и сохранения изображения.
-     */
-    protected static function processAndResizeImage(array $data): array
-    {
-        // Проверяем, был ли загружен новый файл. В Filament - это строка с временным путем.
-        if (isset($data['banner_image_url']) && is_string($data['banner_image_url'])) {
-
-            $originalPath = $data['banner_image_url'];
-            $storage = Storage::disk('public');
-
-            // Проверяем, что файл реально существует
-            if (!$storage->exists($originalPath)) {
-                return $data; // Возвращаем данные без изменений, если файла нет
-            }
-
-            // Читаем временный файл
-            $image = Image::read($storage->path($originalPath));
-
-            // Определяем целевые размеры из формы
-            $targetWidth = $data['width'] ?? 1296;
-            $targetHeight = $data['height'] ?? 450;
-
-            // Обрезаем изображение точно до нужных пропорций, центрируя
-            $image->cover($targetWidth, $targetHeight, 'center');
-
-            // Создаем новое имя файла и путь для обработанного изображения
-            $filename = Str::uuid() . '.' . pathinfo($originalPath, PATHINFO_EXTENSION);
-            $processedPath = 'banner-images/processed/' . $filename;
-
-            // Сохраняем обработанное изображение
-            $storage->put($processedPath, (string) $image->encode());
-
-            // ПОДМЕНЯЕМ ПУТЬ В ДАННЫХ!
-            // Теперь в базу сохранится путь к новому, обрезанному файлу
-            $data['banner_image_url'] = $processedPath;
-        }
-
-        return $data;
-    }
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                ImageColumn::make('banner_image_url')
-                    ->label('Изображение')
-                    ->defaultImageUrl(url('banner_image_url')),
+                ImageColumn::make('desktop_image_url')
+                    ->label('Изображение (десктоп)')
+                    ->width(150)
+                    ->height('auto'),
+
                 TextColumn::make('title')
                     ->label('Заголовок')
                     ->searchable()
                     ->sortable(),
-                BooleanColumn::make('is_active')
-                    ->label('Активна')
-                    ->sortable(),
+
+                TextColumn::make('link_url')
+                    ->label('Ссылка')
+                    ->toggleable(isToggledHiddenByDefault: true) // Скрываем по умолчанию для чистоты
+                    ->url(fn(?string $state): ?string => $state, true), // Делаем ссылку кликабельной
+
+                ToggleColumn::make('is_active') // Позволяет менять статус прямо из таблицы
+                ->label('Активен'),
             ])
             ->filters([
                 //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ])
-        ;
+            ]);
     }
 
     public static function getRelations(): array
@@ -184,6 +167,8 @@ class BannerResource extends Resource
             //
         ];
     }
+
+
 
     public static function getPages(): array
     {

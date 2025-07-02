@@ -49,6 +49,7 @@
                                 {{-- 1. Контактная информация --}}
                                 <h2 class="h5 mb-4">Контактная информация</h2>
                                 <div class="row">
+                                    <input type="hidden" name="delivery_method" value="{{ $deliveryMethod }}">
                                     <div class="col-md-12 mb-3">
                                         <label for="fullName" class="form-label">Полное имя<span class="text-danger">*</span></label>
                                         <input type="text" id="fullName" class="form-control" name="full_name" value="{{ old('full_name', auth()->user()->name) }}" required>
@@ -59,76 +60,67 @@
                                     </div>
                                 </div>
 
-                                {{-- 2. Способ получения --}}
-                                <h2 class="h5 mb-4 mt-4">Способ получения</h2>
-                                <div class="mb-3">
-                                    <div class="form-check d-inline-block me-3">
-                                        <input class="form-check-input" type="radio" name="delivery_method" id="deliveryMethod" value="delivery" @checked(old('delivery_method', 'delivery') == 'delivery')>
-                                        <label class="form-check-label" for="deliveryMethod">Доставка курьером</label>
-                                    </div>
-                                    <div class="form-check d-inline-block">
-                                        <input class="form-check-input" type="radio" name="delivery_method" id="pickupMethod" value="pickup" @checked(old('delivery_method') == 'pickup')>
-                                        <label class="form-check-label" for="pickupMethod">Самовывоз</label>
-                                    </div>
-                                </div>
-                                <div id="deliveryAddressSection">
-                                {{-- 3. Адрес доставки (скрываемый блок) --}}
-                                <h4 class="mb-3">Адрес доставки</h4>
+                                @if($deliveryMethod === 'delivery')
+                                    <div id="deliveryAddressSection">
+                                        <h2 class="h5 mb-4 mt-4">Адрес доставки</h2>
 
-                                {{-- 1. Блок с выбором существующих адресов --}}
-                                @if($addresses->isNotEmpty())
-                                    <div class="mb-4">
-                                        <h5>Выберите сохраненный адрес:</h5>
-                                        @foreach($addresses as $address)
-                                            <div class="card mb-2">
-                                                <div class="card-body p-3">
-                                                    <div class="form-check">
-                                                        {{-- Радиокнопка для выбора адреса --}}
-                                                        <input class="form-check-input" type="radio" name="address_option"
-                                                               id="address_{{ $address->id }}" value="{{ $address->id }}"
-                                                            {{ $loop->first ? 'checked' : '' }}>
-
-                                                        <label class="form-check-label w-100" for="address_{{ $address->id }}">
-                                                            <span class="fw-bold">{{ $address->full_name }}, {{ $address->phone_number }}</span><br>
-                                                            <span class="text-muted">{{ $address->address_line_1 }}, {{ $address->city }}</span>
-                                                        </label>
-                                                    </div>
-                                                </div>
+                                        {{-- Выбор существующего адреса --}}
+                                        @if($addresses->isNotEmpty())
+                                            <div class="mb-4">
+                                                <h5>Выберите сохраненный адрес:</h5>
+                                                @foreach($addresses as $address)
+                                                    <div class="card mb-2"><div class="card-body p-3"><div class="form-check">
+                                                                <input class="form-check-input" type="radio" name="address_option" id="address_{{ $address->id }}" value="{{ $address->id }}" {{ $loop->first ? 'checked' : '' }}>
+                                                                <label class="form-check-label w-100" for="address_{{ $address->id }}">
+                                                                    <span class="fw-bold">{{ $address->full_name }}, {{ $address->phone_number }}</span><br>
+                                                                    <span class="text-muted">{{ $address->address_line_1 }}, {{ $address->city }}</span>
+                                                                </label>
+                                                            </div></div></div>
+                                                @endforeach
                                             </div>
-                                        @endforeach
+                                        @endif
+
+                                        {{-- Опция "Новый адрес" --}}
+                                        <div class="card mb-4"><div class="card-body p-3"><div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="address_option" id="address_new" value="new" {{ $addresses->isEmpty() ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="address_new">Добавить новый адрес</label>
+                                                </div></div></div>
+
+                                        {{-- Форма нового адреса --}}
+                                        <div id="newAddressForm" class="{{ $addresses->isNotEmpty() ? 'd-none' : '' }}">
+                                            <div class="row g-3">
+                                                <div class="col-12"><label for="address_line_1_new" class="form-label">Адрес(улица,дом,квартира)<span class="text-danger">*</span></label><input type="text" class="form-control" name="address_line_1" id="address_line_1_new"></div>
+                                                <div class="col-12"><label for="city_new" class="form-label">Город<span class="text-danger">*</span></label><input type="text" class="form-control" name="city" id="city_new" value="Ташкент"></div>
+                                            </div>
+                                        </div>
                                     </div>
+
                                 @endif
+                                <!-- Вставьте этот блок в нужное место вашей формы -->
+                                <div class="mb-4">
+                                    <h2 class="h5 mb-3 mt-4">Дата доставки</h2>
 
-                                {{-- 2. Опция для добавления нового адреса --}}
-                                <div class="card mb-4">
-                                    <div class="card-body p-3">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="address_option" id="address_new" value="new"
-                                                {{-- Если сохраненных адресов нет, эта опция будет выбрана по умолчанию --}}
-                                                {{ $addresses->isEmpty() ? 'checked' : '' }}>
-                                            <label class="form-check-label" for="address_new">
-                                                Добавить новый адрес
-                                            </label>
-                                        </div>
+                                    {{-- Группа кнопок, которая будет вести себя как радио-кнопки --}}
+                                    <div class="btn-group w-100" role="group" aria-label="Выберите дату доставки">
+
+                                        {{-- Кнопка 1: Сегодня --}}
+                                        <input type="radio" class="btn-check" name="delivery_date" id="date_today" value="today" autocomplete="off" checked>
+                                        <label class="btn btn-outline-primary" for="date_today">Сегодня</label>
+
+                                        {{-- Кнопка 2: Завтра --}}
+                                        <input type="radio" class="btn-check" name="delivery_date" id="date_tomorrow" value="tomorrow" autocomplete="off">
+                                        <label class="btn btn-outline-primary" for="date_tomorrow">Завтра</label>
+
+                                        {{-- Кнопка 3: Послезавтра --}}
+                                        <input type="radio" class="btn-check" name="delivery_date" id="date_day_after" value="day_after" autocomplete="off">
+                                        <label class="btn btn-outline-primary" for="date_day_after">Послезавтра</label>
+
                                     </div>
-                                </div>
 
-
-                                {{-- 3. Форма для ввода нового адреса (изначально может быть скрыта) --}}
-                                {{-- Добавляем ID и класс, чтобы управлять видимостью через JS --}}
-                                <div id="newAddressForm" class="{{ $addresses->isNotEmpty() ? 'd-none' : '' }}">
-                                    <div class="row g-3">
-                                        <div class="col-12">
-                                            <label for="address_line_1_new" class="form-label">Адрес (улица, дом, квартира)</label>
-                                            <input type="text" class="form-control" name="address_line_1" id="address_line_1_new" placeholder="ул. Амира Темура, 1">
-                                        </div>
-
-                                        <div class="col-12">
-                                            <label for="city_new" class="form-label">Город</label>
-                                            <input type="text" class="form-control" name="city" id="city_new" placeholder="Ташкент">
-                                        </div>
+                                    {{-- Текст с временем доставки под кнопками --}}
+                                    <div class="text-muted mt-2">
+                                        <label class="form-check-label">Время доставки: 19:00-22:00</label>
                                     </div>
-                                </div>
                                 </div>
 
                                 {{-- 4. Способ оплаты --}}
@@ -137,6 +129,10 @@
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="payment_method" id="paymentCash" value="cash" @checked(old('payment_method', 'cash') == 'cash')>
                                         <label class="form-check-label" for="paymentCash">Наличными при получении</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="payment_method" id="paymentTerminal" value="card_terminal" @checked(old('payment_method') == 'card_terminal')>
+                                        <label class="form-check-label" for="paymentTerminal">Терминалом при получении</label>
                                     </div>
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="payment_method" id="paymentCard" value="card_online" @checked(old('payment_method') == 'card_online')>
@@ -154,6 +150,52 @@
                             <div class="card mt-4 mt-lg-0">
                                 <div class="card-body p-6">
                                     <h2 class="h5 mb-4">Ваш заказ</h2>
+
+                                    {{-- БЛОК С ТОВАРАМИ --}}
+                                    <ul class="list-group list-group-flush">
+                                        @foreach ($cartItems as $item)
+                                            <li class="list-group-item py-3">
+                                                <div class="d-flex align-items-center">
+                                                    <img src="{{ $item->product->primaryImage ? asset('storage/' . $item->product->primaryImage->image_url) : asset('assets/images/placeholder.png') }}" alt="{{ $item->product->name }}" class="rounded" style="width: 60px;">
+                                                    <div class="ms-3 flex-grow-1">
+                                                        <h6 class="mb-0">{{ $item->product->name }}</h6>
+                                                        <span><small>{{ $item->quantity }} x {{ number_format($item->product->sell_price ?? $item->product->price, 0, '.', ' ') }} сум</small></span>
+                                                    </div>
+                                                    <span class="fw-bold">{{ number_format(($item->product->sell_price ?? $item->product->price) * $item->quantity, 0, '.', ' ') }} сум</span>
+                                                </div>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+
+                                    <hr class="my-4">
+
+                                    {{-- БЛОК С ИТОГАМИ --}}
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Сумма товаров</span>
+                                        <span class="fw-bold">{{ number_format($cartSummary['subtotal'], 0, '.', ' ') }} сум</span>
+                                    </div>
+                                    {{-- Этот блок вставляется в pages/checkout.blade.php --}}
+                                    <div class="d-flex flex-column mb-3">
+                                        {{-- Верхняя строка с основной информацией --}}
+                                        <div class="d-flex justify-content-between w-100">
+                                            <span>Доставка</span>
+                                            <span class="fw-bold">
+            @if($cartSummary['shipping'] > 0)
+                                                    {{ number_format($cartSummary['shipping'], 0, '.', ' ') }} сум
+                                                @else
+                                                    <span class="text-success">Бесплатно</span>
+                                                @endif
+        </span>
+                                        </div>
+
+                                        {{-- Нижняя строка с примечанием (теперь без выравнивания по правому краю) --}}
+                                        <small class="text-muted mt-1">Выезд за город: +1000 сум/км</small>
+                                    </div>
+                                    <div class="d-flex justify-content-between fw-bold fs-5">
+                                        <span>Итого к оплате: </span>
+                                        <span>{{ number_format($cartSummary['total'], 0, '.', ' ') }} сум</span>
+                                    </div>
+
                                     <div class="d-grid mt-4">
                                         <button type="submit" id="place-order-btn" class="btn btn-primary btn-lg">Оформить заказ</button>
                                     </div>
@@ -164,13 +206,14 @@
                 </form>
 
                 {{-- Скрытая форма для перенаправления на Payme --}}
-                <form id="payme-form" action="https://checkout.paycom.uz" method="POST" style="display: none;">
-                    <input type="hidden" name="merchant" value="{{config('payme.merchant_id') }}">
-                    <input type="hidden" name="amount" id="payme-amount">
-                    <input type="hidden" name="account[order_id]" id="payme-order-id">
-                    <input type="hidden" name="description" value="Оплата заказа">
-                    <input type="hidden" name="lang" value="ru">
-                </form>
+{{--                <form id="payme-form" action="https://checkout.paycom.uz/api" method="POST" style="display: none;">--}}
+{{--                    <input type="hidden" name="merchant" value="{{config('payme.merchant_id') }}">--}}
+{{--                    <input type="hidden" name="amount" id="payme-amount">--}}
+{{--                    <input type="hidden" name="account[order_id]" id="payme-order-id">--}}
+{{--                    <input type="hidden" name="account[user_id]" id="payme-user-id"> --}}{{-- <-- НОВОЕ ПОЛЕ --}}
+{{--                    <input type="hidden" name="description" value="Оплата заказа">--}}
+{{--                    <input type="hidden" name="lang" value="ru">--}}
+{{--                </form>--}}
             </div>
         </section>
     </main>
@@ -179,127 +222,108 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-
             // ===================================================================
-            // ОБРАБОТЧИКИ ДЛЯ ИНТЕРФЕЙСА ФОРМЫ
+            // ЛОГИКА ДЛЯ ПЕРЕКЛЮЧЕНИЯ АДРЕСА (остается без изменений)
             // ===================================================================
-
-            // --- Логика для скрытия/показа ВСЕГО блока адреса при смене способа получения ---
-            const deliveryMethodOptions = document.querySelectorAll('input[name="delivery_method"]');
-            const deliveryAddressSection = document.getElementById('deliveryAddressSection');
-
-            function toggleDeliverySection() {
-                const selectedMethod = document.querySelector('input[name="delivery_method"]:checked').value;
-                if (selectedMethod === 'delivery') {
-                    deliveryAddressSection.classList.remove('d-none');
-                } else {
-                    deliveryAddressSection.classList.add('d-none');
-                }
-            }
-
-            deliveryMethodOptions.forEach(radio => {
-                radio.addEventListener('change', toggleDeliverySection);
-            });
-
-            // --- Логика для скрытия/показа формы НОВОГО адреса ---
             const addressOptions = document.querySelectorAll('input[name="address_option"]');
             const newAddressForm = document.getElementById('newAddressForm');
+            const newAddressInputs = newAddressForm ? newAddressForm.querySelectorAll('input') : [];
 
             function toggleNewAddressForm() {
+                if (!newAddressForm) return;
                 const newAddressRadio = document.getElementById('address_new');
                 if (newAddressRadio && newAddressRadio.checked) {
                     newAddressForm.classList.remove('d-none');
+                    newAddressInputs.forEach(input => input.required = true);
                 } else {
                     newAddressForm.classList.add('d-none');
+                    newAddressInputs.forEach(input => input.required = false);
                 }
             }
-
-            addressOptions.forEach(radio => {
-                radio.addEventListener('change', toggleNewAddressForm);
-            });
-
-            // --- Вызываем обе функции при загрузке страницы, чтобы установить правильное начальное состояние ---
-            if (deliveryAddressSection) toggleDeliverySection();
-            if (newAddressForm) toggleNewAddressForm();
-
+            addressOptions.forEach(radio => radio.addEventListener('change', toggleNewAddressForm));
+            toggleNewAddressForm();
 
             // ===================================================================
-            // ОБРАБОТКА ОТПРАВКИ ФОРМЫ И ПЕРЕНАПРАВЛЕНИЯ НА PAYME
+            // ИСПРАВЛЕННАЯ ОБРАБОТКА ОТПРАВКИ ФОРМЫ
             // ===================================================================
-
             const checkoutForm = document.getElementById('checkout-form');
             const placeOrderBtn = document.getElementById('place-order-btn');
 
-            if(checkoutForm && placeOrderBtn) {
+            if (checkoutForm && placeOrderBtn) {
                 checkoutForm.addEventListener('submit', function(event) {
-                    event.preventDefault(); // Всегда останавливаем стандартную отправку
-
                     const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
 
-                    // Блокируем кнопку, чтобы избежать двойных нажатий
                     placeOrderBtn.disabled = true;
-                    placeOrderBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Обработка...';
+                    placeOrderBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Обработка...';
 
-                    if (paymentMethod === 'card_online') {
-                        // --- ОПЛАТА КАРТОЙ (Payme) ---
-                        const formData = new FormData(checkoutForm);
-
-                        fetch('{{ route('checkout.store') }}', {
-                            method: 'POST',
-                            headers: {
-                                'Accept': 'application/json', // Говорим серверу, что мы ожидаем JSON
-                                // CSRF токен не нужен при использовании FormData в Laravel, но оставим для совместимости
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                            },
-                            body: formData
-                        })
-                            .then(response => {
-                                // Важно: сначала проверяем, был ли ответ успешным
-                                if (!response.ok) {
-                                    // Если сервер вернул ошибку (например, 422 Unprocessable Entity из-за валидации)
-                                    // то пытаемся прочитать JSON с ошибками
-                                    return response.json().then(errorData => Promise.reject(errorData));
-                                }
-                                return response.json(); // Если все хорошо, читаем успешный JSON
-                            })
-                            .then(data => {
-                                // Этот блок выполнится ТОЛЬКО если ответ был успешным (статус 2xx)
-                                if (data.success) {
-                                    // Заполняем скрытую форму Payme
-                                    const paymeForm = document.getElementById('payme-form');
-                                    document.getElementById('payme-amount').value = data.amount;
-                                    document.getElementById('payme-order-id').value = data.order_id;
-
-                                    // Отправляем пользователя на сайт Payme
-                                    paymeForm.submit();
-                                } else {
-                                    // Это случай, когда сервер вернул 200 OK, но в JSON есть `success: false`
-                                    throw new Error(data.message || 'Произошла неизвестная ошибка.');
-                                }
-                            })
-                            .catch(error => {
-                                // Этот блок ловит ВСЕ ошибки: и сетевые, и ошибки сервера (4xx, 5xx)
-                                console.error('Ошибка при оформлении заказа:', error);
-                                // Выводим сообщение об ошибке
-                                let errorMessage = 'Не удалось создать заказ.';
-                                if (error.message) {
-                                    errorMessage = error.message;
-                                }
-                                if (error.errors) { // Если это ошибка валидации от Laravel
-                                    errorMessage = Object.values(error.errors).join('\n');
-                                }
-                                alert(errorMessage);
-
-                                // Разблокируем кнопку
-                                placeOrderBtn.disabled = false;
-                                placeOrderBtn.innerHTML = 'Оформить заказ';
-                            });
-
-                    } else {
-                        // --- ОПЛАТА НАЛИЧНЫМИ ---
-                        // Просто отправляем форму как обычно, сервер обработает и сделает редирект
-                        checkoutForm.submit();
+                    if (paymentMethod !== 'card_online') {
+                        return; // Разрешаем обычную отправку для наличных/терминала
                     }
+
+                    // Логика только для онлайн-оплаты
+                    event.preventDefault();
+
+                    const formData = new FormData(checkoutForm);
+
+                    fetch('{{ route('checkout.store') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: formData
+                    })
+                        .then(response => response.ok ? response.json() : response.json().then(e => Promise.reject(e)))
+                        .then(data => {
+                            if (data.success) {
+                                // --- НОВАЯ ЛОГИКА ФОРМИРОВАНИЯ URL ---
+
+                                // 1. Собираем параметры в массив
+                                const params = {
+                                    'm': '{{ config('payme.merchant_id') }}',
+                                    'ac.order_id': data.order_id,
+                                    'ac.user_id': data.user_id, // Добавляем user_id
+                                    'a': data.amount,
+                                    'l': 'ru', // Язык
+                                    'c': '{{ route('order.success') }}' // URL для возврата после успешной оплаты
+                                };
+
+                                // 2. Превращаем объект в строку "key=value;key=value"
+                                const paramString = Object.entries(params)
+                                    .map(([key, value]) => `${key}=${value}`)
+                                    .join(';');
+
+                                // 3. Кодируем строку в base64
+                                // Функция btoa() кодирует в base64
+                                const base64Params = btoa(paramString);
+
+                                // 4. Формируем финальный URL
+                                const redirectUrl = `https://checkout.paycom.uz/${base64Params}`;
+
+                                console.log('Сгенерированная строка:', paramString);
+                                console.log('Закодированная строка:', base64Params);
+                                console.log('Финальный URL для редиректа:', redirectUrl);
+
+                                // 5. Перенаправляем пользователя
+                                window.location.href = redirectUrl;
+
+                            } else {
+                                throw new Error(data.message || 'Произошла ошибка на сервере.');
+                            }
+                        })
+                        .catch(error => {
+                            // ... (код обработки ошибок остается таким же)
+                            console.error('Произошла ошибка:', error);
+                            let errorMessage = 'Не удалось создать заказ.';
+                            if (error && error.errors) {
+                                errorMessage = Object.values(error.errors).flat().join('\n');
+                            } else if (error && error.message) {
+                                errorMessage = error.message;
+                            }
+                            alert(errorMessage);
+                            placeOrderBtn.disabled = false;
+                            placeOrderBtn.innerHTML = 'Оформить заказ';
+                        });
                 });
             }
         });

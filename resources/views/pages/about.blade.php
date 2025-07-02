@@ -19,7 +19,6 @@
                 </div>
 
                 <div class="row">
-                    {{-- Мы используем контейнер с темным фоном, как на вашем примере --}}
                     <div class="col-12">
                         <div class="bg-dark text-white rounded-3 p-lg-8 p-4">
                             <div class="row align-items-center">

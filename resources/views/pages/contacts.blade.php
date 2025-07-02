@@ -24,24 +24,24 @@
                 </div>
 
                 <div class="row g-5">
-                    {{-- Левая колонка с картой --}}
-                    <div class="col-lg-7 col-12">
+                    {{-- Левая колонка с картой (на десктопе), вторая на мобильных --}}
+                    <div class="col-lg-7 col-12 order-2 order-lg-1">
                         {{-- Элемент, в котором будет отображаться карта --}}
                         {{-- Задаем высоту, чтобы он не был "схлопнутым" --}}
                         <div id="yandex-map" style="width: 100%; height: 550px;" class="rounded-3"></div>
                     </div>
 
-                    {{-- Правая колонка с информацией --}}
-                    <div class="col-lg-5 col-12">
+                    {{-- Правая колонка с информацией (на десктопе), первая на мобильных --}}
+                    <div class="col-lg-5 col-12 order-1 order-lg-2">
                         <div class="card border-0 bg-dark text-white p-4 p-lg-5 h-100 rounded-3">
                             <div class="card-body">
                                 <h6 class="text-white-50">Центральный офис</h6>
-                                <h4 class="mb-4">Ташкент, Мирабадский район, ул. Шахрисабз, 23
+                                <h4 class="mb-4" style="color: white">Узбекистан, г.Ташкент
                                 </h4>
 
                                 <h6 class="text-white-50 mt-4">Режим работы</h6>
                                 <p class="mb-1">Интернет-магазин: ежедневно с 9:00 до 21:00</p>
-                                <p>Склад (самовывоз): ежедневно с 8:00 до 19:00</p>
+
 
                                 <h6 class="text-white-50 mt-4">Телефон</h6>
                                 <p class="mb-1"><a href="tel:+998771327700" class="text-white text-decoration-none"> +998 77 132 77 00</a></p>
