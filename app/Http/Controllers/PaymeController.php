@@ -91,7 +91,7 @@ class PaymeController extends Controller
                 ]
             ]]);
         }
-        if ((int)($order->total_amount ) != (int)$params['amount']) {
+        if ((int)($order->total_amount * 100 ) != (int)$params['amount']) {
             return response()->json(['id' => $id, 'error' => ['code' => -31001, 'message' =>
                 [
                     'ru' => 'Неверная сумма.',
@@ -219,17 +219,27 @@ class PaymeController extends Controller
         $transaction->perform_time = now();
         $transaction->save();
 
+        Log::info("Payme: Транзакция {$transaction->id} проведена успешно. Ищем заказ...");
+
         $order = $transaction->order;
         if ($order) {
-            $order->update(['status' => 'processing', 'payment_status' => 'paid']);
+            Log::info("Payme: Найден заказ #{$order->id} для транзакции {$transaction->id}. Обновляем статус.");
+            $order->update([
+                'status' => 'processing',
+                'payment_status' => 'paid']);
+            Log::info("Payme: Статус заказа #{$order->id} обновлен.");
             try {
                 (new TelegramService())->sendOrderNotifications($order);
+                Log::info("Payme: Уведомление для заказа #{$order->id} отправлено.");
             } catch (\Exception $e) {
                 Log::error("Ошибка отправки Telegram для заказа {$order->id}: " . $e->getMessage());
             }
         }
 
-        return response()->json(['id' => $id, 'result' => ['transaction' => (string)$transaction->id, 'perform_time' => (int)$transaction->perform_time_unix, 'state' => (int)$transaction->state]]);
+        return response()->json(['id' => $id, 'result' => [
+            'transaction' => (string)$transaction->id,
+            'perform_time' => (int)$transaction->perform_time_unix,
+            'state' => (int)$transaction->state]]);
     }
     private function checkTransaction(array $params, $id)
     {

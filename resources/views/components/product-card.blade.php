@@ -59,16 +59,16 @@
                 @if($product->sell_price && $product->sell_price < $product->price)
                     {{-- Сначала обычная цена, перечеркнутая и меньше размером --}}
                     <div class="original-price text-muted text-decoration-line-through" style="font-size: 0.85em; line-height: 1;">
-                        {{ number_format($product->price,  0, '', ' ') }} сум
+                        {{ number_format($product->price,  0, '', ' ') }} {{__('sum')}}
                     </div>
                     {{-- Потом скидочная цена, крупнее и жирнее --}}
                     <div class="sale-price fs-5 fw-bold text-dark" style="line-height: 1.2;">
-                        {{ number_format($product->sell_price,  0, '', ' ') }} сум
+                        {{ number_format($product->sell_price,  0, '', ' ') }} {{__('sum')}}
                     </div>
                 @else
                     {{-- Если скидки нет, просто обычная цена --}}
                     <div class="regular-price fs-5 fw-bold text-dark">
-                        {{ number_format($product->price, 0, '', ' ') }} сум
+                        {{ number_format($product->price, 0, '', ' ') }} {{__('sum')}}
                     </div>
                 @endif
             </div>
@@ -90,17 +90,17 @@
                                 data-stock-quantity="{{ $product->stock_quantity }}"
                             {{ $productInCart ? 'disabled' : '' }}>
                             <i class="bi bi-cart-plus me-1"></i>
-                            <span class="btn-text">{{ $productInCart ? 'В корзине' : 'В корзину' }}</span>
+                            <span class="btn-text">{{ $productInCart ? __('In cart'): __('Add to cart')}}</span>
                             <span class="spinner-border spinner-border-sm d-none ms-1" role="status" aria-hidden="true"></span>
                         </button>
                     @else
                         <button class="btn btn-secondary stop-propagation" disabled>
-                            Нет в наличии
+                            {{__('No in sklad')}}
                         </button>
                     @endif
                 @else
                     <button class="btn btn-primary stop-propagation" data-bs-toggle="modal" data-bs-target="#userModal">
-                        <i class="bi bi-box-arrow-in-right me-1"></i> В корзину
+                        <i class="bi bi-box-arrow-in-right me-1"></i> {{__('Add to cart')}}
                     </button>
                 @endauth
             </div>

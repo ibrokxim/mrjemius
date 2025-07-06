@@ -10,8 +10,8 @@
                     <div class="col-12">
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb mb-0">
-                                <li class="breadcrumb-item"><a href="{{ route('welcome') }}">Главная</a></li>
-                                <li class="breadcrumb-item active" aria-current="page">Блог</li>
+                                <li class="breadcrumb-item"><a href="{{ route('welcome') }}">{{__('main')}}</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">{{__('blog')}}</li>
                             </ol>
                         </nav>
                     </div>
@@ -22,7 +22,7 @@
             <div class="container">
                 <div class="row">
                     <div class="col-12">
-                        <h1 class="fw-bold">Полезные советы</h1>
+                        <h1 class="fw-bold">{{__('Blog')}}</h1>
                     </div>
                 </div>
             </div>
@@ -61,7 +61,7 @@
                         </div>
                     @empty
                         <div class="col-12">
-                            <p>Пока нет ни одной записи в блоге.</p>
+                            <p>{{__('blog empty')}}</p>
                         </div>
                     @endforelse
 

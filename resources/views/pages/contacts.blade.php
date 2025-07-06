@@ -8,8 +8,8 @@
             <div class="container">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="{{ route('welcome') }}">Главная</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Контакты</li>
+                        <li class="breadcrumb-item"><a href="{{ route('welcome') }}">{{__('About')}}</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{__('Contacts')}}</li>
                     </ol>
                 </nav>
             </div>
@@ -19,12 +19,11 @@
             <div class="container">
                 <div class="row">
                     <div class="col-12 mb-6">
-                        <h1 class="mb-0">Контакты</h1>
+                        <h1 class="mb-0">{{__('Contacts')}}</h1>
                     </div>
                 </div>
 
                 <div class="row g-5">
-                    {{-- Левая колонка с картой (на десктопе), вторая на мобильных --}}
                     <div class="col-lg-7 col-12 order-2 order-lg-1">
                         {{-- Элемент, в котором будет отображаться карта --}}
                         {{-- Задаем высоту, чтобы он не был "схлопнутым" --}}
@@ -35,15 +34,15 @@
                     <div class="col-lg-5 col-12 order-1 order-lg-2">
                         <div class="card border-0 bg-dark text-white p-4 p-lg-5 h-100 rounded-3">
                             <div class="card-body">
-                                <h6 class="text-white-50">Центральный офис</h6>
-                                <h4 class="mb-4" style="color: white">Узбекистан, г.Ташкент
+                                <h6 class="text-white-50">{{__('Center office')}}</h6>
+                                <h4 class="mb-4" style="color: white">{{__('Uzbekistan')}}
                                 </h4>
 
-                                <h6 class="text-white-50 mt-4">Режим работы</h6>
-                                <p class="mb-1">Интернет-магазин: ежедневно с 9:00 до 21:00</p>
+                                <h6 class="text-white-50 mt-4">{{__('work rejim')}}</h6>
+                                <p class="mb-1">{{__('work hours')}}</p>
 
 
-                                <h6 class="text-white-50 mt-4">Телефон</h6>
+                                <h6 class="text-white-50 mt-4">{{__('phone')}}</h6>
                                 <p class="mb-1"><a href="tel:+998771327700" class="text-white text-decoration-none"> +998 77 132 77 00</a></p>
 
                                 <h6 class="text-white-50 mt-4">E-mail</h6>

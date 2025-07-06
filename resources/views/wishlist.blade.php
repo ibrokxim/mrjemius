@@ -8,8 +8,8 @@
             <div class="container">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="{{ route('welcome') }}">Главная</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Мой список желаний</li>
+                        <li class="breadcrumb-item"><a href="{{ route('welcome') }}">{{__('main')}}</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{__('My wishlist')}}</li>
                     </ol>
                 </nav>
             </div>
@@ -22,13 +22,13 @@
                         <div class="mb-8">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <h1 class="mb-1">Мой список желаний</h1>
-                                    <p>В вашем списке желаний {{ $products->total() }} товар(ов).</p>
+                                    <h1 class="mb-1">{{__('My wishlist')}}</h1>
+                                    <p>{{__('in wishlist')}} {{ $products->total() }} {{__('tovars')}}</p>
                                 </div>
                                 @if($products->count() > 0)
                                     <div>
                                         <button class="btn btn-success" id="moveAllToCartBtn">
-                                            <i class="bi bi-cart-plus me-2"></i>Все в корзину
+                                            <i class="bi bi-cart-plus me-2"></i>{{__('all in cart')}}
                                         </button>
                                     </div>
                                 @endif
@@ -39,10 +39,10 @@
                                 <table class="table text-nowrap">
                                     <thead class="table-light">
                                     <tr>
-                                        <th>Товар</th>
-                                        <th>Цена</th>
-                                        <th>Статус</th>
-                                        <th>Действия</th>
+                                        <th>{{__('tovar')}}</th>
+                                        <th>{{__('cost')}}</th>
+                                        <th>{{__('status')}}</th>
+                                        <th>{{__('actions')}}</th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -70,16 +70,17 @@
                                             </td>
                                             <td class="align-middle">
                                                 @if($product->stock_quantity > 0)
-                                                    <span class="badge bg-success">В наличии</span>
+                                                    <span class="badge bg-success">{{__('In sklad')}}</span>
                                                 @else
-                                                    <span class="badge bg-danger">Нет в наличии</span>
+                                                    <span class="badge bg-danger">{{__('No in sklad')}}</span>
                                                 @endif
                                             </td>
                                             <td class="align-middle">
                                                 @if($product->stock_quantity > 0)
-                                                    <button class="btn btn-primary btn-sm add-to-cart-btn" data-product-id="{{ $product->id }}">В корзину</button>
+                                                    <button class="btn btn-primary btn-sm add-to-cart-btn" data-product-id="{{ $product->id }}">
+                                                        {{__("Add to cart")}}</button>
                                                 @else
-                                                    <button class="btn btn-dark btn-sm" disabled>Нет в наличии</button>
+                                                    <button class="btn btn-dark btn-sm" disabled>{{__('No in sklad')}}</button>
                                                 @endif
                                             </td>
                                             <td class="align-middle">
@@ -91,7 +92,7 @@
                                     @empty
                                         <tr>
                                             <td colspan="5" class="text-center py-5">
-                                                Ваш список желаний пуст.
+                                                {{__('empty wishlist')}}
                                             </td>
                                         </tr>
                                     @endforelse

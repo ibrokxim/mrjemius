@@ -21,9 +21,6 @@
     <section class="mt-8">
         @if($banners->isNotEmpty())
             <div class="container my-4">
-            {{-- Стили для адаптивности баннеров.
-                 Их можно вынести в ваш основной CSS-файл (например, public/css/app.css),
-                 чтобы не держать их прямо в Blade-файле. --}}
             <style>
                 .adaptive-banner {
                     display: block;
@@ -88,12 +85,7 @@
                             --mobile-bg-position: {{ $banner->mobile_bg_position }};
                             --desktop-height: {{ $banner->desktop_height }}px;
                             --mobile-height: {{ $banner->mobile_height }}px;
-                        "
-                            >
-                                {{-- Если у баннера есть заголовок, выводим его поверх изображения --}}
-    {{--                            @if($banner->title)--}}
-    {{--                                <h2 class="adaptive-banner__title">{{ $banner->title }}</h2>--}}
-    {{--                            @endif--}}
+                        ">
                             </a>
                         </div>
                     @endforeach
@@ -239,7 +231,7 @@
                 }
 
                 .features-mobile-slider .slick-dots li.slick-active button:before {
-                    color: #28a745;
+                    color: #FF569F;
                 }
             </style>
         @endpush
@@ -320,7 +312,7 @@
                 }
 
                 .features-mobile-slider .slick-dots li.slick-active button:before {
-                    color: #28a745;
+                    color: #FF569F;
                 }
             </style>
         @endpush
@@ -371,12 +363,6 @@
 
                     {{-- ИЗМЕНЕНИЯ ЗДЕСЬ: Возвращаем структуру с 4 колонками на десктопе --}}
                     <div class="row g-4 row-cols-2 row-cols-lg-4">
-                        {{--         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-                                     g-4: Увеличили отступ между карточками
-                                     row-cols-2: На мобильных будет 2 колонки (как вы и хотели)
-                                     row-cols-lg-4: На больших экранах будет 4 колонки (как на вашем скриншоте)
-                        --}}
-
                         @foreach($categories as $category)
                             <div class="col">
                                 <a href="{{ route('category.show', $category->slug) }}" class="text-decoration-none text-inherit">
@@ -622,17 +608,15 @@
             <div class="row">
                 <div class="col-12 col-md-6 mb-3 mb-lg-0">
                     <div>
-                        <div class="py-10 px-8 rounded" style="background: url(assets/images/banner/grechka.png)
+                        <div class="py-10 px-8 rounded" style="background: url(assets/images/about/oblojka.png)
                         no-repeat;
                         background-size: cover; background-position: center">
                             <div class="text-white" >
-                                <h3 class="fw-bold mb-1 text-white">Grechka - правильное питание</h3>
+                                <h3 class="fw-bold mb-1 text-white">{{__('about us')}}</h3>
                                 <p class="mb-4">
-                                    Скидки до
-                                    <span class="fw-bold">30%</span>
-
+                                    <span class="fw-bold">{{__('company')}}</span>
                                 </p>
-                                <a href="https://www.grechkafood.uz/" class="btn btn-dark">Перейти </a>
+                                <a href="{{ route('about') }}" class="btn btn-dark">{{__('ozn')}} </a>
                             </div>
                         </div>
                     </div>
@@ -643,13 +627,11 @@
                         no-repeat;
                         background-size: cover; background-position: center">
                             <div class="text-white" >
-                                <h3 class="fw-bold mb-1 text-white">Grechka - правильное питание</h3>
+                                <h3 class="fw-bold mb-1 text-white">{{__('Grechka')}}</h3>
                                 <p class="mb-4">
-                                    Скидки до
-                                    <span class="fw-bold">30%</span>
-
+                                    {{__('Promotion')}}
                                 </p>
-                                <a href="https://www.grechkafood.uz/" class="btn btn-dark">О компании </a>
+                                <a href="https://www.grechkafood.uz/" class="btn btn-dark">{{__('redirect')}} </a>
                             </div>
                         </div>
                     </div>
@@ -693,10 +675,7 @@
                         if (clickableCard) {
                             const url = clickableCard.dataset.url;
                             if (url) {
-                                // Не предотвращаем стандартное действие, чтобы средняя кнопка мыши работала
-                                // Но если это вызовет проблемы, можно раскомментировать preventDefault и использовать window.location
-                                // e.preventDefault();
-                                // window.location.href = url;
+
                             }
                         }
                     });
@@ -757,7 +736,7 @@
                             if (response.ok && data.success) {
                                 button.classList.remove('btn-primary');
                                 button.classList.add('btn-success');
-                                if (btnText) btnText.textContent = 'В корзине';
+                                if (btnText) btnText.textContent = '{{__('In cart')}}';
                                 updateCartCount(data.cart_count);
                             } else {
                                 button.disabled = false;

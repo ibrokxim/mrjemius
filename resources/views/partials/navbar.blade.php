@@ -6,11 +6,12 @@
             <div class="d-flex justify-content-center align-items-center">
                 <div class="me-4">
                     <a href="tel:+998771327700" class="text-dark fw-semibold text-decoration-none">
-                        <i class="bi bi-telephone-fill me-1 text-primary"></i> +998 77 132 77 00
+                        <i class="bi bi-telephone-fill me-1 " style="color: #FF569F"></i>
++998 77 132 77 00
                     </a>
                 </div>
                 <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#contactModal">
-                    Связаться с нами
+                    {{__('form')}}
                 </button>
             </div>
         </div>
@@ -37,7 +38,7 @@
                 <div class="col-xxl-5 col-lg-5 d-none d-lg-block">
                     <form action="{{ route('search.products') }}" method="GET">
                         <div class="input-group">
-                            <input class="form-control rounded" name="query" type="search" placeholder="Поиск по продуктам" value="{{ request('query') }}" required />
+                            <input class="form-control rounded" name="query" type="search" placeholder="{{__('Search')}}" value="{{ request('query') }}" required />
                             <button class="btn bg-white border border-start-0 ms-n10 rounded-0 rounded-end" type="submit" aria-label="Поиск">
                                 <i class="feather-icon icon-search"></i>
                             </button>
@@ -216,7 +217,7 @@
                     <div class="d-block d-lg-none mb-4">
                         <form action="{{ route('search.products') }}" method="GET">
                             <div class="input-group">
-                                <input class="form-control rounded" name="query" type="search" placeholder="Поиск по продуктам" value="{{ request('query') }}" required />
+                                <input class="form-control rounded" name="query" type="search" placeholder="{{__('Search')}}" value="{{ request('query') }}" required />
                                 <span class="input-group-append">
                     <button class="btn bg-white border border-start-0 ms-n10 rounded-0 rounded-end" type="submit">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
@@ -231,7 +232,6 @@
                         </form>
                     </div>
 
-                    {{-- Переключатель языка (2) --}}
                     <div class="d-block d-lg-none mb-4">
                         <div class="dropdown w-100">
                             <button class="btn btn-outline-secondary dropdown-toggle w-100 d-flex justify-content-between align-items-center"

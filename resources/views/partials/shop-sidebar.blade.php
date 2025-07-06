@@ -4,7 +4,7 @@
     <input type="hidden" name="per_page" value="{{ request('per_page') }}">
 
     <div class="mb-8">
-        <h5 class="mb-3">Категории</h5>
+        <h5 class="mb-3">{{__('Categories')}}</h5>
         <ul class="nav nav-category" id="categoryCollapseMenu">
             @foreach($allCategories as $cat)
                 <li class="nav-item border-bottom w-100">
@@ -20,16 +20,16 @@
     </div>
 
     <div class="mb-8">
-        <h5 class="mb-3">Цена</h5>
+        <h5 class="mb-3">{{__('Price')}}</h5>
         <div class="d-flex align-items-center gap-2">
-            <input type="number" name="price_from" class="form-control" placeholder="От" min="0" value="{{ request('price_from') }}">
+            <input type="number" name="price_from" class="form-control" placeholder="{{__('ot')}}" min="0" value="{{ request('price_from') }}">
             <span>–</span>
-            <input type="number" name="price_to" class="form-control" placeholder="До" min="0" value="{{ request('price_to') }}">
+            <input type="number" name="price_to" class="form-control" placeholder="{{__('do')}}" min="0" value="{{ request('price_to') }}">
         </div>
     </div>
 
     <div class="mb-8">
-        <h5 class="mb-3">Рейтинг</h5>
+        <h5 class="mb-3">{{__('Rating')}}</h5>
         <div>
             @for ($i = 4; $i >= 1; $i--)
                 <div class="form-check mb-2">
@@ -38,7 +38,7 @@
                         @for ($j = 1; $j <= 5; $j++)
                             <i class="bi bi-star{{ $j <= $i ? '-fill' : '' }} text-warning"></i>
                         @endfor
-                        <span class="ms-1 small text-muted">и выше</span>
+                        <span class="ms-1 small text-muted">{{__('And more')}}</span>
                     </label>
                 </div>
             @endfor
@@ -46,10 +46,10 @@
     </div>
 
     <div class="d-grid mb-2">
-        <button type="submit" class="btn btn-primary">Применить фильтры</button>
+        <button type="submit" class="btn btn-primary">{{__('Apply filters')}}</button>
     </div>
     <div class="d-grid">
-        <a href="{{ url()->current() }}" class="btn btn-outline-secondary">Сбросить все фильтры</a>
+        <a href="{{ url()->current() }}" class="btn btn-outline-secondary">{{__('Clean filters')}}</a>
     </div>
 </form>
 

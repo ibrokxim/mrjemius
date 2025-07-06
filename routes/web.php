@@ -46,7 +46,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/cart/add/{product}', [CartController::class, 'add'])->name('cart.add');
     Route::patch('/cart/update/{cartItem}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/remove/{cartItem}', [CartController::class, 'remove'])->name('cart.remove');
-    Route::post('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
+    Route::delete('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
     Route::post('/cart/move-from-wishlist', [CartController::class, 'moveFromWishlist'])->name('cart.move.from.wishlist');
 });
 Route::middleware('auth')->prefix('checkout')->name('checkout.')->group(function () {
@@ -60,7 +60,9 @@ Route::get('/order-success', [App\Http\Controllers\CheckoutController::class,'su
 
 Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store')->middleware('auth');
 Route::get('/contacts', [PageController::class, 'contacts'])->name('contacts');
-
+Route::get('/terms-and-conditions', function () {
+    return view('pages.terms'); // Мы будем использовать шаблон 'pages.terms'
+})->name('terms.show');
 // routes/web.php
 
 Route::get('language/{locale}', [LanguageController::class, 'switchLanguage'])->name('language.switch')->where('language', 'ru|uz');;

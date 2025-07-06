@@ -1,147 +1,138 @@
 <!-- footer -->
-<footer class="footer">
+<footer class="footer bg-dark text-white">
     <div class="container">
-        <div class="row g-4 py-4">
+        <div class="row g-4 py-5">
+            {{-- Логотип и описание --}}
+            <div class="col-12 col-lg-4">
+                <div class="mb-4">
+                    <h4 class="text-white mb-3">Mr. Djemius Zero</h4>
+                    <p class="text-white-50 mb-4">{{__('health')}}</p>
+                </div>
 
-            {{-- 1. КОЛОНКА КОНТАКТОВ (видна всегда) --}}
-            <div class="col-12 col-lg-3">
-                <h6 class="mb-4">Контакты</h6>
-                <ul class="nav flex-column">
-                    <li class="nav-item mb-3">
-                        <a href="tel:+998771327700" class="nav-link p-0 fs-5 fw-bold text-dark">+998 77 132 77 00</a>
-                    </li>
-                    <li class="nav-item mb-3">
-                        <a href="mailto:mrdjemiuszero.uz@gmail.com" class="nav-link p-0 text-muted">mrdjemiuszero.uz@gmail.com</a>
-                    </li>
-                </ul>
-                <ul class="list-inline">
-                    <li class="list-inline-item me-1">
-                        <a href="" class="btn btn-xs btn-social btn-icon">
-                            {{-- SVG вашей иконки --}}
-                            <i class="bi bi-facebook"></i>
-                        </a>
-                    </li>
-                    <li class="list-inline-item me-1">
-                        <a href="https://t.me/mrdjemiuszerouz" class="btn btn-xs btn-social btn-icon">
+                {{-- Социальные сети --}}
+                <div class="mb-4">
+                    <h6 class="text-white mb-3">{{__('social_links')}}</h6>
+                    <div class="d-flex gap-3">
+                        <a href="https://t.me/mrdjemiuszerouz" class="btn btn-outline-light btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
                             <i class="bi bi-telegram"></i>
                         </a>
-                    </li>
-                    <li class="list-inline-item">
-                        <a href="https://www.instagram.com/mr.djemiuszero.uz" class="btn btn-xs btn-social btn-icon" aria-label="Instagram">
-                            {{-- Замените SVG ниже на свой кастомный --}}
-                            <i class="bi-instagram"></i>
+                        <a href="https://www.instagram.com/mr.djemiuszero.uz" class="btn btn-outline-light btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="bi bi-instagram"></i>
                         </a>
+                        <a href="" class="btn btn-outline-light btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="bi bi-facebook"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Пустая колонка для выравнивания --}}
+            <div class="col-12 col-lg-2 d-none d-lg-block"></div>
+
+            {{-- Быстрые ссылки --}}
+            <div class="col-12 col-md-4 col-lg-2">
+                <h6 class="text-white mb-4">{{__('menu')}}</h6>
+                <ul class="nav flex-column">
+                    <li class="nav-item mb-2">
+                        <a href="{{ route('welcome') }}#products-section" class="nav-link p-0 text-white-50 hover-text-white">{{__('Products')}}</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a href="{{ route('blog.index') }}" class="nav-link p-0 text-white-50 hover-text-white">{{__('Blog')}}</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a href="https://www.grechkafood.uz/" class="nav-link p-0 text-white-50 hover-text-white">{{__('PP')}}</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a href="{{ route('about') }}" class="nav-link p-0 text-white-50 hover-text-white">{{__('About')}}</a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a href="{{ route('contacts') }}" class="nav-link p-0 text-white-50 hover-text-white">{{__('Contacts')}}</a>
                     </li>
                 </ul>
             </div>
 
-            {{-- Обертка для остальных колонок --}}
-            <div class="col-12 col-lg-9">
-                <div class="row">
-                    {{-- КОЛОНКА "Продукты" --}}
-                    <div class="col-12 col-md-4 col-lg-3  mb-4 mb-md-0">
-                        {{-- Заголовок для десктопа --}}
-                        <h6 class="mb-4 d-none d-md-block">Продукты</h6>
-                        {{-- Заголовок-кнопка для мобильных --}}
-                        <a class="h6 text-decoration-none d-md-none" data-bs-toggle="collapse" href="#footerProducts" role="button" aria-expanded="false" aria-controls="footerProducts">
-                            Продукты <i class="bi bi-chevron-down"></i>
-                        </a>
-                        {{-- Сворачивающийся список --}}
-                        <div class="collapse d-md-block" id="footerProducts">
-                            <ul class="nav flex-column mt-md-0 mt-3">
-                                <li class="nav-item mb-2"><a href="#!" class="nav-link">О компании</a></li>
-                                <li class="nav-item mb-2"><a href="#!" class="nav-link">Точки продаж</a></li>
-                                <li class="nav-item mb-2"><a href="#!" class="nav-link">Акции</a></li>
-                                <li class="nav-item mb-2"><a href="#!" class="nav-link">Контакты</a></li>
-                            </ul>
-                        </div>
-                    </div>
+            {{-- Каталог --}}
+            <div class="col-12 col-md-4 col-lg-2">
+                <h6 class="text-white mb-4">{{__('catalog')}}</h6>
+                <ul class="nav flex-column">
+                    @foreach($categories as $cat)
+                        <li class="nav-item mb-2">
+                            <a class="nav-link p-0 text-white-50 hover-text-white" href="{{ route('category.show', $cat->slug) }}">{{ $cat->name }}</a>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
 
-                    {{-- КОЛОНКА "Каталог" --}}
-                    <div class="col-12 col-md-4 col-lg-3  mb-4 mb-md-0">
-                        <h6 class="mb-4 d-none d-md-block">Каталог</h6>
-                        <a class="h6 text-decoration-none d-md-none" data-bs-toggle="collapse" href="#footerCatalog" role="button" aria-expanded="false" aria-controls="footerCatalog">
-                            Каталог <i class="bi bi-chevron-down"></i>
-                        </a>
-                        <div class="collapse d-md-block" id="footerCatalog">
-                            <ul class="nav flex-column mt-md-0 mt-3">
-                                @if(isset($categories) && $categories->isNotEmpty())
-                                    @foreach($categories as $category)
-                                        <li class="nav-item mb-2"><a href="{{ route('category.show', $category->slug)}}" class="nav-link">{{ $category->name }}</a></li>
-                                    @endforeach
-                                @endif
-                            </ul>
-                        </div>
+            {{-- Контакты --}}
+            <div class="col-12 col-md-4 col-lg-2">
+                <h6 class="text-white mb-4">{{__('Contacts')}}</h6>
+                <div class="mb-3">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-telephone-fill text-white-50 me-2"></i>
+                        <a href="tel:+998771327700" class="text-white text-decoration-none fw-bold">+998 77 132 77 00</a>
                     </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-envelope-fill text-white-50 me-2"></i>
+                        <a href="mailto:mrdjemiuszero.uz@gmail.com" class="text-white-50 text-decoration-none">mrdjemiuszero.uz@gmail.com</a>
+                    </div>
+                    {{--                    <div class="d-flex align-items-start">--}}
+                    {{--                        <i class="bi bi-geo-alt-fill text-white-50 me-2 mt-1"></i>--}}
+                    {{--                        <span class="text-white-50">Узбекистан, г. Ташкент</span>--}}
+                    {{--                    </div>--}}
+                </div>
 
-                    {{-- КОЛОНКА "Полезные советы" --}}
-                    <div class="col-12 col-md-4 col-lg-3  mb-4 mb-md-0">
-                        <h6 class="mb-4 d-none d-md-block">Полезные советы</h6>
-                        <a class="h6 text-decoration-none d-md-none" data-bs-toggle="collapse" href="#footerHelp" role="button" aria-expanded="false" aria-controls="footerHelp">
-                            Полезные советы <i class="bi bi-chevron-down"></i>
-                        </a>
-                        <div class="collapse d-md-block" id="footerHelp">
-                            <ul class="nav flex-column mt-md-0 mt-3">
-                                <li class="nav-item mb-2"><a href="#!" class="nav-link">Как сделать заказ</a></li>
-                                <li class="nav-item mb-2"><a href="#!" class="nav-link">Оплата</a></li>
-                                <li class="nav-item mb-2"><a href="#!" class="nav-link">Доставка</a></li>
-                                <li class="nav-item mb-2"><a href="#!" class="nav-link">Бонусная система</a></li>
-                                <li class="nav-item mb-2"><a href="#!" class="nav-link">Условия возврата</a></li>
-                                <li class="nav-item mb-2"><a href="#!" class="nav-link">Вопросы и ответы</a></li>
-                                <li class="nav-item mb-2"><a href="#!" class="nav-link">Отзывы</a></li>
-                                <li class="nav-item mb-2"><a href="#!" class="nav-link">Оптовикам</a></li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    {{-- КОЛОНКА "Правильное питание" --}}
-                    <div class="col-12 col-md-4 col-lg-3  mb-4 mb-md-0">
-                        <h6 class="mb-4 d-none d-md-block">Правильное питание</h6>
-                        <a class="h6 text-decoration-none d-md-none" data-bs-toggle="collapse" href="#footerNutrition" role="button" aria-expanded="false" aria-controls="footerNutrition">
-                            Правильное питание <i class="bi bi-chevron-down"></i>
-                        </a>
-                        <div class="collapse d-md-block" id="footerNutrition">
-                            <ul class="nav flex-column mt-md-0 mt-3">
-                                <li class="nav-item mb-2"><a href="#!" class="nav-link">Диетическое питание</a></li>
-                                <li class="nav-item mb-2"><a href="#!" class="nav-link">Кето диета</a></li>
-                                <li class="nav-item mb-2"><a href="#!" class="nav-link">Диета Дюкана</a></li>
-                                <li class="nav-item mb-2"><a href="#!" class="nav-link">Продукты без глютена</a></li>
-                                <li class="nav-item mb-2"><a href="#!" class="nav-link">ПП завтрак</a></li>
-                                <li class="nav-item mb-2"><a href="#!" class="nav-link">Полезный перекус</a></li>
-                                <li class="nav-item mb-2"><a href="#!" class="nav-link">Диабетическое питание</a></li>
-                                <li class="nav-item mb-2"><a href="#!" class="nav-link">Веганские продукты</a></li>
-                            </ul>
-                        </div>
-                    </div>
+                <div class="text-white-50 small">
+                    <strong>{{__('rejim')}}</strong><br>
+                    {{__('time')}}
                 </div>
             </div>
         </div>
 
         {{-- Нижняя часть футера --}}
-        <div class="border-top py-4">
+        <div class="border-top border-secondary py-4">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                     <span class="small text-muted">
+                    <span class="text-white-50 small">
                         ©
                         <span id="copyright">
                            <script>document.getElementById("copyright").appendChild(document.createTextNode(new Date().getFullYear()));</script>
                         </span>
-                        Mr. Djemius. Все права защищены.
-                     </span>
+                        Mr. Djemius Zero. {{__('rights')}}
+                    </span>
                 </div>
                 <div class="col-md-6">
-                    <ul class="list-inline text-md-end mb-0 small mt-3 mt-md-0">
-                        {{-- Ссылки на партнеров по оплате, если нужны --}}
-                        <li class="list-inline-item text-dark">Способы оплаты</li>
-                        <li class="list-inline-item">
-                            <a href="#!"><img src="{{ asset('assets/images/payment/uzcardd.png') }}" alt="Uzcard" width="20" height="20" /></a>
-                        </li>
-                        <li class="list-inline-item">
-                            <a href="#!"><img src="{{ asset('assets/images/payment/payme.svg') }}" alt="Payme" width="50" height="30" /></a>
-                        </li>
-                    </ul>
+                    <div class="d-flex justify-content-md-end align-items-center mt-3 mt-md-0">
+                        <span class="text-white-50 small me-3">{{__('payment_methods')}}</span>
+                        <div class="d-flex gap-2">
+                            <li class="list-inline-item">
+                                <a href="#!"><img src="{{ asset('assets/images/payment/uzcardd.png') }}" alt="Uzcard" width="25" height="25" /></a>
+                            </li>
+                            <li class="list-inline-item">
+                                <a href="#!"><img src="{{ asset('assets/images/payment/payme.svg') }}" alt="Payme" width="50" height="30" /></a>
+                            </li>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </footer>
+
+<style>
+    .hover-text-white:hover {
+        color: white !important;
+        transition: color 0.3s ease;
+    }
+
+    .footer .nav-link:hover {
+        transform: translateX(5px);
+        transition: transform 0.3s ease;
+    }
+
+    .footer .btn-outline-light:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-color: white;
+        transform: translateY(-2px);
+        transition: all 0.3s ease;
+    }
+</style>

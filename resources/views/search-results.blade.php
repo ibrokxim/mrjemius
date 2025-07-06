@@ -7,8 +7,8 @@
         <div class="container">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{{ route('welcome') }}">Главная</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Поиск</li>
+                    <li class="breadcrumb-item"><a href="{{ route('welcome') }}">{{__('main')}}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{__('search')}}</li>
                 </ol>
             </nav>
         </div>
@@ -19,9 +19,9 @@
             <div class="row">
                 <div class="col-12">
                     <div class="mb-4">
-                        <h2>Результаты поиска по запросу: "{{ e($searchQuery) }}"</h2>
+                        <h2>{{__('search results')}}"{{ e($searchQuery) }}"</h2>
                         <p class="mb-0">
-                            <span class="text-dark">{{ $products->total() }}</span> товаров найдено
+                            <span class="text-dark">{{ $products->total() }}</span> {{__('products find')}}
                         </p>
                     </div>
 
@@ -33,7 +33,7 @@
                             </div>
                         @empty
                             <div class="col-12">
-                                <div class="alert alert-warning">К сожалению, по вашему запросу ничего не найдено. Попробуйте изменить поисковую фразу.</div>
+                                <div class="alert alert-warning">{{__('Search text')}}</div>
                             </div>
                         @endforelse
                     </div>

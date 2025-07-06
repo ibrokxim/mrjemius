@@ -12,10 +12,10 @@
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb mb-0">
                             {{-- Ссылка на главную страницу --}}
-                            <li class="breadcrumb-item"><a href="{{ route('welcome') }}">Главная</a></li>
+                            <li class="breadcrumb-item"><a href="{{ route('welcome') }}">{{__('main')}}</a></li>
 
                             {{-- Ссылка на общий каталог (если есть такая страница) --}}
-                            <li class="breadcrumb-item"><a href="#">Каталог</a></li>
+                            <li class="breadcrumb-item"><a href="#">{{__('catalog')}}</a></li>
 
                             {{-- Здесь можно добавить цикл для родительских категорий, если у вас есть вложенность --}}
                             @if ($category->parent)
@@ -40,7 +40,7 @@
                 <aside class="col-lg-3 col-md-4 mb-6 mb-md-0">
                     <div class="offcanvas offcanvas-start offcanvas-collapse w-md-50" tabindex="-1" id="offcanvasCategory" aria-labelledby="offcanvasCategoryLabel">
                         <div class="offcanvas-header d-lg-none">
-                            <h5 class="offcanvas-title" id="offcanvasCategoryLabel">Фильтры</h5>
+                            <h5 class="offcanvas-title" id="offcanvasCategoryLabel">{{__('filters')}}</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
                         </div>
                         <div class="offcanvas-body ps-lg-2 pt-lg-0">
@@ -50,14 +50,27 @@
                     </div>
                 </aside>
                 <section class="col-lg-9 col-md-12">
+{{--                    <h2 class="mb-0 fs-1">{{ $category->name }}</h2>--}}
                     <!-- card -->
                     <div class="card mb-4 bg-light border-0">
-                        <!-- card body -->
-                        <div class="card-body p-9">
-                            <h2 class="mb-0 fs-1">{{ $category->name }}</h2>
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center">
+                                {{-- Изображение --}}
+                                <div class="flex-shrink-0 me-3">
+                                    <img src="{{ Storage::disk('public')->url($category->image_url) }}"
+                                         class="rounded"
+                                         style="height: 80px; width: 80px; object-fit: cover;"
+                                         alt="{{ $category->name }}">
+                                </div>
 
+                                {{-- Название --}}
+                                <div class="flex-grow-1">
+                                    <h2 class="mb-0 fs-1">{{ $category->name }}</h2>
+                                </div>
+                            </div>
                         </div>
                     </div>
+
                     <!-- list icon -->
                     <form id="filter_sort_form" action="{{ url()->current() }}" method="GET">
                         {{-- Передаем существующие фильтры в скрытых полях, чтобы не потерять их при смене сортировки/пагинации --}}
@@ -68,7 +81,7 @@
                         <div class="d-lg-flex justify-content-between align-items-center">
                             <div class="mb-3 mb-lg-0">
                                 <p class="mb-0">
-                                    <span class="text-dark">{{ $products->total() }}</span> товаров найдено
+                                    <span class="text-dark">{{ $products->total() }}</span>{{__('tovar total')}}
                                 </p>
                             </div>
                             <div class="d-md-flex justify-content-between align-items-center">
@@ -76,24 +89,27 @@
                                     <div class="ms-2 d-lg-none w-100 ">
                                         <a class="btn btn-outline-gray-400 text-muted d-flex align-items-center justify-content-center" data-bs-toggle="offcanvas" href="#offcanvasCategory" role="button" aria-controls="offcanvasCategory">
                                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-filter me-2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
-                                            Фильтры
+                                            {{__('filters')}}
                                         </a>
                                     </div>
                                 </div>
                                 <div class="d-flex mt-2 mt-lg-0">
                                     <div class="me-2 flex-grow-1">
                                         <select class="form-select" name="per_page" onchange="this.form.submit()">
-                                            <option value="12" @selected(request('per_page', 12) == 12)>Показывать: 12</option>
+                                            <option value="" disabled selected>{{__('show')}}:</option>
+                                            <option value="12" @selected(request('per_page') == 12)>12</option>
                                             <option value="24" @selected(request('per_page') == 24)>24</option>
                                             <option value="36" @selected(request('per_page') == 36)>36</option>
                                         </select>
                                     </div>
                                     <div>
                                         <select class="form-select" name="sort" onchange="this.form.submit()">
-                                            <option value="newest" @selected(request('sort', 'newest') == 'newest')>Сортировать: Новинки</option>
-                                            <option value="price-asc" @selected(request('sort') == 'price-asc')>Цена: по возрастанию</option>
-                                            <option value="price-desc" @selected(request('sort') == 'price-desc')>Цена: по убыванию</option>
-                                            <option value="rating-desc" @selected(request('sort') == 'rating-desc')>Рейтинг</option>
+                                            <option value="" disabled selected>{{__('sort')}}:</option>
+                                            <option value="newest" @selected(request('sort') == 'newest')> {{__('newest')}}</option>
+                                            <option value="price-asc" @selected(request('sort') == 'price-asc')>{{__('cost up')}}</option>
+                                            <option value="price-desc" @selected(request('sort') == 'price-desc')>{{__('cost down')}}</option>
+                                            <option value="rating-desc" @selected(request('sort') == 'rating-desc')>
+                                                {{__('rating')}}</option>
                                         </select>
                                     </div>
                                 </div>
@@ -109,7 +125,7 @@
                             </div>
                         @empty
                             <div class="col-12">
-                                <div class="alert alert-info">В этой категории пока нет товаров или они не соответствуют вашим критериям фильтрации.</div>
+                                <div class="alert alert-info">{{__('filter text')}}</div>
                             </div>
                         @endforelse
                     </div>

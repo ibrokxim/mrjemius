@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Order;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
@@ -10,16 +11,14 @@ class TelegramService
 {
     public function sendOrderNotifications(Order $order): void
     {
-//        $this->notifyAdmin($order);
+        $this->notifyAdmin($order);
         $this->notifyClient($order);
     }
 
-    /**
-     * Уведомляет администраторов о новом заказе.
-     */
+
     protected function notifyAdmin(Order $order): void
     {
-        $adminChatId = -4857413796; // верни сюда env() если тест прошёл
+        $adminChatId = -4857413796;
 
         if (!$adminChatId) {
             Log::warning("notifyAdmin: TELEGRAM_ADMIN_CHAT_ID не установлен.");
@@ -29,35 +28,85 @@ class TelegramService
         $user = $order->user;
         $address = $order->shippingAddress;
 
-        // Экранируем только переменные
+        // --- Определение типа заказа ---
+        $paymentMethodText = '';
+        $headerText = '';
+        if ($order->payment_method === 'card_online') {
+            $paymentMethodText = '💳 *Картой онлайн \\(ОПЛАЧЕНО\\!\\)*';
+            $headerText = '✅ *Новый ОПЛАЧЕННЫЙ заказ\\!*';
+        } else {
+            $paymentMethodText = '💵 *Наличными при получении*';
+            $headerText = '📦 *Новый заказ \\(оплата при получении\\)\\!*';
+        }
+
+        // --- Подготовка данных ---
+        $deliveryDateString = $order->delivered_at
+            ? \Carbon\Carbon::parse($order->delivered_at)->locale('ru')->isoFormat('D MMMM (dddd)')
+            : 'Не указана';
+
+        $sourceText = $order->source === 'telegram_bot' ? 'Telegram Бот' : 'Сайт';
+        $sourceIcon = $order->source === 'telegram_bot' ? '🤖' : '🌐';
+
+        // --- Подсчет предыдущих заказов ---
+        $previousOrdersCount = 0;
+        if ($user) {
+            $previousOrdersCount = Order::where('user_id', $user->id)
+                ->where('id', '!=', $order->id)
+                ->whereIn('status', ['processing', 'shipped', 'delivered'])
+                ->count();
+        }
+
+        // --- Экранирование переменных для MarkdownV2 ---
         $orderNumber = $this->escapeMarkdown($order->order_number);
         $userName = $this->escapeMarkdown($user->name ?? 'Не указано');
-        $userPhone = $address->phone_number ?? 'Не указан'; // Не требует экранирования в код-блоке
-        $addressString = $this->escapeMarkdown($address ? "{$address->city}, {$address->address_line_1}" : 'Не указан');
+        $userPhone = $address->phone_number ?? ($user->phone ?? 'Не указан');
+        $addressString = $this->escapeMarkdown($address ? "{$address->city}, {$address->address_line_1}" : 'Самовывоз');
         $customerNotes = $this->escapeMarkdown($order->customer_notes ?? '');
+        $deliveryDateFormatted = $this->escapeMarkdown($deliveryDateString);
+        $totalAmount = $this->escapeMarkdown(number_format($order->total_amount, 0, '.', ' '));
 
-        // Заголовок: вручную экранируем восклицательный знак
-        $adminMessage = "🎉 *Новый заказ\\!* №{$orderNumber}\n\n";
+        // --- Формирование сообщения ---
+        $adminMessage = "{$headerText} №{$orderNumber}\n\n";
+        $adminMessage .= "{$sourceIcon} *Источник заказа:* {$sourceText}\n\n";
 
-        $adminMessage .= "*Клиент:*\n";
+        if ($previousOrdersCount > 0) {
+            $orderCountText = $this->getRussianPlural($previousOrdersCount, ['заказ', 'заказа', 'заказов']);
+            $adminMessage .= "🔁 *Повторный заказ\\!* \\(у клиента уже было {$previousOrdersCount} {$orderCountText}\\)\n\n";
+        }
+
+        $adminMessage .= "👤 *Клиент:*\n";
         $adminMessage .= "  • *Имя:* {$userName}\n";
         $adminMessage .= "  • *Телефон:* `{$userPhone}`\n\n";
 
-        $adminMessage .= "*Детали заказа:*\n";
-        $adminMessage .= "  • *Адрес:* {$addressString}\n\n";
+        $adminMessage .= "📅 *Желаемая дата доставки:*\n";
+        $adminMessage .= "  • *{$deliveryDateFormatted}*\n\n";
 
-        $adminMessage .= "*Состав заказа:*\n";
+        if ($order->shipping_method === 'delivery') {
+            $adminMessage .= "🚚 *Доставка:*\n";
+            $adminMessage .= "  • *Адрес:* {$addressString}\n\n";
+        } else {
+            $adminMessage .= "🏃 *Самовывоз*\n\n";
+        }
+
+        $adminMessage .= "📦 *Состав заказа:*\n";
         foreach ($order->items as $item) {
-            $productName = $this->escapeMarkdown($item->product_name);
+            // --- КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Получаем название товара принудительно на русском ('ru') ---
+            $productNameInRussian = $item->product->getTranslation('name', 'ru');
+            $productName = $this->escapeMarkdown($productNameInRussian);
+
             $adminMessage .= "• {$productName} \\(x{$item->quantity}\\)\n";
         }
         $adminMessage .= "\n";
 
         if (!empty($customerNotes)) {
-            $adminMessage .= "*Комментарий клиента:*\n";
+            $adminMessage .= "💬 *Комментарий клиента:*\n";
             $adminMessage .= "\\_{$customerNotes}\\_\n\n";
         }
 
+        $adminMessage .= "💰 *Итоговая сумма:* *{$totalAmount} сум*\n";
+        $adminMessage .= "💸 *Способ оплаты:* {$paymentMethodText}";
+
+        // --- Отправка сообщения ---
         try {
             Telegram::sendMessage([
                 'chat_id' => $adminChatId,
@@ -158,5 +207,23 @@ class TelegramService
             // Перебрасываем исключение, чтобы контроллер знал об ошибке
             throw $e;
         }
+    }
+
+    private function getRussianPlural(int $number, array $words): string
+    {
+        $number = abs($number) % 100;
+        $mod10 = $number % 10;
+
+        if ($number > 10 && $number < 20) {
+            return $words[2];
+        }
+        if ($mod10 > 1 && $mod10 < 5) {
+            return $words[1];
+        }
+        if ($mod10 == 1) {
+            return $words[0];
+        }
+
+        return $words[2];
     }
 }

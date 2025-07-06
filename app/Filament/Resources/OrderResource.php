@@ -196,7 +196,8 @@ class OrderResource extends Resource
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Дата создания')
                     ->dateTime('d.m.Y H:i')
-                    ->sortable(),
+                    ->sortable()
+
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')

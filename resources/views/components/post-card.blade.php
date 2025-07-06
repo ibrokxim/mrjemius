@@ -18,7 +18,7 @@
         <p>{{ $post->excerpt }}</p>
         <div class="d-flex justify-content-between text-muted mt-4">
             <span><small>{{ $post->published_at->format('d M Y') }}</small></span>
-            <span><small>Время чтения: <span class="text-dark fw-bold">{{-- 8min --}}</span></small></span>
+{{--            <span><small>Время чтения: <span class="text-dark fw-bold">--}}{{-- 8min --}}{{--</span></small></span>--}}
         </div>
     </div>
 </div>

@@ -187,7 +187,7 @@ class CartController extends Controller
     /**
      * Очистка корзины
      */
-    public function clear(): JsonResponse
+    public function clear()
     {
         if (Auth::check()) {
             CartItem::where('user_id', Auth::id())->delete();
@@ -198,10 +198,7 @@ class CartController extends Controller
                 ->delete();
         }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Корзина очищена'
-        ]);
+        return redirect()->route('cart.index')->with('success', 'Корзина была успешно очищена.');
     }
 
     /**

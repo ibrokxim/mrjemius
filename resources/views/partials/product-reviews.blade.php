@@ -5,7 +5,7 @@
         <div class="col-md-4">
             <div class="me-lg-12 mb-6 mb-md-0">
                 <div class="mb-5">
-                    <h4 class="mb-3">Отзывы клиентов</h4>
+                    <h4 class="mb-3">{{__('Client reviews')}}</h4>
                     @if($reviewsCount > 0)
                         <span>
                         <small class="text-warning">
@@ -42,11 +42,11 @@
                 {{-- Кнопка для добавления отзыва --}}
                 <div class="d-grid">
                     @auth
-                        <h4>Оцените этот товар</h4>
-                        <p class="mb-0">Поделитесь своим мнением с другими покупателями.</p>
-                        <button id="write-review-btn" class="btn btn-outline-gray-400 mt-4 text-muted">Написать отзыв</button>
+                        <h4>{{__('Rate product')}}</h4>
+                        <p class="mb-0">{{__('Share review')}}</p>
+                        <button id="write-review-btn" class="btn btn-outline-gray-400 mt-4 text-muted">{{__('Write review')}}</button>
                     @else
-                        <h4>Оставьте свой отзыв</h4>
+                        <h4>{{__('Ostavit')}}</h4>
                         <p class="mb-0">Пожалуйста, <a href="#!" data-bs-toggle="modal" data-bs-target="#userModal">войдите</a>, чтобы оставить отзыв.</p>
                     @endauth
                 </div>
@@ -57,7 +57,7 @@
         <div class="col-md-8">
             <div class="mb-10">
                 <div class="d-flex justify-content-between align-items-center mb-8">
-                    <div><h4>Отзывы</h4></div>
+                    <div><h4>{{__('Reviews')}}</h4></div>
                     {{-- Здесь можно добавить сортировку отзывов --}}
                 </div>
                 @forelse($reviews as $review)
@@ -77,7 +77,7 @@
                         </div>
                     </div>
                 @empty
-                    <p>Для этого товара еще нет отзывов. Будьте первым!</p>
+                    <p>{{__('First review')}}</p>
                 @endforelse
             </div>
 
@@ -85,7 +85,7 @@
             @auth
                 <div id="review-form-container" class="mt-5" style="display: none;">
                     <hr>
-                    <h3 class="mb-5">Написать отзыв</h3>
+                    <h3 class="mb-5">{{__('Write review')}}</h3>
                     @if ($errors->any())
                         <div class="alert alert-danger">
                             <ul class="mb-0">
@@ -104,7 +104,7 @@
                         @csrf
                         <input type="hidden" name="product_id" value="{{ $product->id }}">
                         <div class="border-bottom py-4 mb-4">
-                            <h4 class="mb-3">Общая оценка</h4>
+                            <h4 class="mb-3">{{__('All review')}}</h4>
                             <div id="rating-stars">
                                 @for ($i = 5; $i >= 1; $i--)
                                     <div class="form-check form-check-inline">
@@ -115,11 +115,11 @@
                             </div>
                         </div>
                         <div class="py-4 mb-4">
-                            <h5>Напишите свой отзыв</h5>
+                            <h5>{{__('Write your review')}}</h5>
                             <textarea class="form-control" name="comment" rows="3" placeholder="Что вам понравилось или не понравилось?" required>{{ old('comment') }}</textarea>
                         </div>
                         <div class="d-flex justify-content-end">
-                            <button type="submit" class="btn btn-primary">Отправить отзыв</button>
+                            <button type="submit" class="btn btn-primary">{{__('Send Review')}}</button>
                         </div>
                     </form>
                 </div>

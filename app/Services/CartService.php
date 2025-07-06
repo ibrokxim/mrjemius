@@ -117,16 +117,16 @@ class CartService
         $freeShippingThreshold = config('cart.free_shipping_threshold', 500000);
         $baseShippingCost = config('cart.shipping_cost', 20000);
 
-        $actualShippingCost = ($subtotal > 0 && $subtotal < $freeShippingThreshold) ? $baseShippingCost : 0;
-
-        $total = $subtotal + $actualShippingCost;
+        //$actualShippingCost = ($subtotal > 0 && $subtotal < $freeShippingThreshold) ? $baseShippingCost : 0;
+        $displayShippingCost = ($subtotal >= $freeShippingThreshold || $subtotal == 0) ? 0 : $baseShippingCost;
+        $total = $subtotal;
         $needsForFreeShipping = max(0, $freeShippingThreshold - $subtotal);
 
         return [
             'items' => $cartItems,
             'count' => $cartItems->sum('quantity'),
             'subtotal' => $subtotal,
-            'shipping' => $actualShippingCost,
+            'shipping' => $displayShippingCost,
             'baseShippingCost' => $baseShippingCost, // Оставляем на всякий случай
             'total' => $total,
             'needsForFreeShipping' => $needsForFreeShipping,
@@ -142,10 +142,6 @@ class CartService
     public function getCount(): int
     {
         if (Auth::check()) {
-            // Если хотите считать количество позиций (уникальных товаров)
-            // return Auth::user()->cartItems()->count();
-
-            // Если хотите считать общее количество всех единиц товаров
             return Auth::user()->cartItems()->sum('quantity');
         }
         return 0;

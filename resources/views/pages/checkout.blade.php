@@ -1,6 +1,26 @@
 @extends('layouts.app')
 
 @section('title', 'Оформление заказа')
+@push('style')
+    <style>
+        .date-select-btn.active {
+            background-color: #FF569F; /* Ваш розовый цвет */
+            color: white;
+            border-color: #FF569F;
+        }
+
+        /* Дополнительно, чтобы текст даты тоже стал белым */
+        .date-select-btn.active small {
+            color: white !important;
+        }
+
+        .btn-group .btn small {
+            display: block;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+    </style>
+@endpush
 
 @section('content')
     <main>
@@ -8,9 +28,9 @@
             <div class="container">
                 <nav aria-label="breadcrumb">
                     <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="{{ route('welcome') }}">Главная</a></li>
-                        <li class="breadcrumb-item"><a href="{{ route('cart.index') }}">Корзина</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">Оформление заказа</li>
+                        <li class="breadcrumb-item"><a href="{{ route('welcome') }}">{{__('main')}}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ route('cart.index') }}">{{__('cart')}}</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{__('order')}}</li>
                     </ol>
                 </nav>
             </div>
@@ -21,7 +41,7 @@
                 <div class="row">
                     <div class="col-12">
                         <div>
-                            <h1 class="fw-bold">Оформление заказа</h1>
+                            <h1 class="fw-bold">{{__('order')}}</h1>
                         </div>
                     </div>
                 </div>
@@ -47,27 +67,27 @@
                         <div class="col-lg-7 col-md-12">
                             <div class="card card-body p-6">
                                 {{-- 1. Контактная информация --}}
-                                <h2 class="h5 mb-4">Контактная информация</h2>
+                                <h2 class="h5 mb-4">{{__('contact_info')}}</h2>
                                 <div class="row">
                                     <input type="hidden" name="delivery_method" value="{{ $deliveryMethod }}">
                                     <div class="col-md-12 mb-3">
-                                        <label for="fullName" class="form-label">Полное имя<span class="text-danger">*</span></label>
+                                        <label for="fullName" class="form-label">{{__('full_name')}}<span class="text-danger">*</span></label>
                                         <input type="text" id="fullName" class="form-control" name="full_name" value="{{ old('full_name', auth()->user()->name) }}" required>
                                     </div>
                                     <div class="col-md-12 mb-3">
-                                        <label for="phone" class="form-label">Телефон<span class="text-danger">*</span></label>
-                                        <input type="text" id="phone" class="form-control" name="phone_number" value="{{ old('phone_number') }}" required placeholder="+998 XX XXX-XX-XX">
+                                        <label for="phone" class="form-label">{{__('phone')}}<span class="text-danger">*</span></label>
+                                        <input type="text" id="phone" class="form-control" name="phone_number" value="{{ old('phone_number', $latestAddress->phone_number ?? '') }}" required>
                                     </div>
                                 </div>
 
                                 @if($deliveryMethod === 'delivery')
                                     <div id="deliveryAddressSection">
-                                        <h2 class="h5 mb-4 mt-4">Адрес доставки</h2>
+                                        <h2 class="h5 mb-4 mt-4">{{__('address')}}</h2>
 
                                         {{-- Выбор существующего адреса --}}
                                         @if($addresses->isNotEmpty())
                                             <div class="mb-4">
-                                                <h5>Выберите сохраненный адрес:</h5>
+                                                <h5>{{__('save_address')}}</h5>
                                                 @foreach($addresses as $address)
                                                     <div class="card mb-2"><div class="card-body p-3"><div class="form-check">
                                                                 <input class="form-check-input" type="radio" name="address_option" id="address_{{ $address->id }}" value="{{ $address->id }}" {{ $loop->first ? 'checked' : '' }}>
@@ -83,73 +103,79 @@
                                         {{-- Опция "Новый адрес" --}}
                                         <div class="card mb-4"><div class="card-body p-3"><div class="form-check">
                                                     <input class="form-check-input" type="radio" name="address_option" id="address_new" value="new" {{ $addresses->isEmpty() ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="address_new">Добавить новый адрес</label>
+                                                    <label class="form-check-label" for="address_new">{{__('new_address')}}</label>
                                                 </div></div></div>
 
                                         {{-- Форма нового адреса --}}
                                         <div id="newAddressForm" class="{{ $addresses->isNotEmpty() ? 'd-none' : '' }}">
                                             <div class="row g-3">
-                                                <div class="col-12"><label for="address_line_1_new" class="form-label">Адрес(улица,дом,квартира)<span class="text-danger">*</span></label><input type="text" class="form-control" name="address_line_1" id="address_line_1_new"></div>
-                                                <div class="col-12"><label for="city_new" class="form-label">Город<span class="text-danger">*</span></label><input type="text" class="form-control" name="city" id="city_new" value="Ташкент"></div>
+                                                <div class="col-12"><label for="address_line_1_new" class="form-label">{{__('address_line')}}<span class="text-danger">*</span></label><input type="text" class="form-control" name="address_line_1" id="address_line_1_new"></div>
+                                                <div class="col-12"><label for="city_new" class="form-label">{{__('city')}}<span class="text-danger">*</span></label><input type="text" class="form-control" name="city" id="city_new" value="Ташкент"></div>
                                             </div>
                                         </div>
                                     </div>
 
                                 @endif
-                                <!-- Вставьте этот блок в нужное место вашей формы -->
                                 <div class="mb-4">
-                                    <h2 class="h5 mb-3 mt-4">Дата доставки</h2>
+                                    <h2 class="h5 mb-3 mt-4">{{__('delivery_date')}}</h2>
 
                                     {{-- Группа кнопок, которая будет вести себя как радио-кнопки --}}
-                                    <div class="btn-group w-100" role="group" aria-label="Выберите дату доставки">
-
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <input type="hidden" name="delivered_at" id="delivery_date_input" value="{{ $deliveryDates['today'] }}">
                                         {{-- Кнопка 1: Сегодня --}}
-                                        <input type="radio" class="btn-check" name="delivery_date" id="date_today" value="today" autocomplete="off" checked>
-                                        <label class="btn btn-outline-primary" for="date_today">Сегодня</label>
+                                        <div class="flex-fill">
+                                            <button type="button" class="btn btn-outline-primary w-100 date-select-btn active" data-date="{{ $deliveryDates['today'] }}">
+                                                <div>{{__('today')}}</div>
+                                                <small>{{ now()->locale(app()->getLocale())->isoFormat('D MMMM') }}</small>
+                                            </button>
+                                        </div>
 
-                                        {{-- Кнопка 2: Завтра --}}
-                                        <input type="radio" class="btn-check" name="delivery_date" id="date_tomorrow" value="tomorrow" autocomplete="off">
-                                        <label class="btn btn-outline-primary" for="date_tomorrow">Завтра</label>
+                                        <div class="flex-fill">
+                                            <button type="button" class="btn btn-outline-primary w-100 date-select-btn" data-date="{{ $deliveryDates['tomorrow'] }}">
+                                                <div>{{__('tomorrow')}}</div>
+                                                <small>{{ now()->addDay()->locale(app()->getLocale())->isoFormat('D MMMM') }}</small>
+                                            </button>
+                                        </div>
 
-                                        {{-- Кнопка 3: Послезавтра --}}
-                                        <input type="radio" class="btn-check" name="delivery_date" id="date_day_after" value="day_after" autocomplete="off">
-                                        <label class="btn btn-outline-primary" for="date_day_after">Послезавтра</label>
+                                        <div class="flex-fill">
+                                            <button type="button" class="btn btn-outline-primary w-100 date-select-btn" data-date="{{ $deliveryDates['day_after'] }}">
+                                                <div>{{__('after_tommorrow')}}</div>
+                                                <small>{{ now()->addDays(2)->locale(app()->getLocale())->isoFormat('D MMMM') }}</small>
+                                            </button>
+                                        </div>
 
                                     </div>
 
                                     {{-- Текст с временем доставки под кнопками --}}
                                     <div class="text-muted mt-2">
-                                        <label class="form-check-label">Время доставки: 19:00-22:00</label>
+                                        <label class="form-check-label">{{__('delivery_time')}} 18:00-22:00</label>
                                     </div>
                                 </div>
 
                                 {{-- 4. Способ оплаты --}}
-                                <h2 class="h5 mb-4 mt-4">Способ оплаты</h2>
+                                <h2 class="h5 mb-4 mt-4">{{__('payment_methods')}}</h2>
                                 <div>
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="payment_method" id="paymentCash" value="cash" @checked(old('payment_method', 'cash') == 'cash')>
-                                        <label class="form-check-label" for="paymentCash">Наличными при получении</label>
+                                        <label class="form-check-label" for="paymentCash">{{__('cash')}}</label>
                                     </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="payment_method" id="paymentTerminal" value="card_terminal" @checked(old('payment_method') == 'card_terminal')>
-                                        <label class="form-check-label" for="paymentTerminal">Терминалом при получении</label>
-                                    </div>
+
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="payment_method" id="paymentCard" value="card_online" @checked(old('payment_method') == 'card_online')>
-                                        <label class="form-check-label" for="paymentCard">Картой онлайн (Payme, Uzcard)</label>
+                                        <label class="form-check-label" for="paymentCard">{{__('payme')}}</label>
                                     </div>
                                 </div>
 
                                 {{-- 5. Примечание --}}
-                                <h2 class="h5 mb-4 mt-4">Примечание к заказу (необязательно)</h2>
-                                <textarea class="form-control" name="customer_notes" rows="3" placeholder="Оставьте комментарий к вашему заказу...">{{ old('customer_notes') }}</textarea>
+                                <h2 class="h5 mb-4 mt-4">{{__('note')}}</h2>
+                                <textarea class="form-control" name="customer_notes" rows="3" placeholder="{{__('komment')}}">{{ old('customer_notes') }}</textarea>
                             </div>
                         </div>
 
                         <div class="col-lg-5 col-md-12">
                             <div class="card mt-4 mt-lg-0">
                                 <div class="card-body p-6">
-                                    <h2 class="h5 mb-4">Ваш заказ</h2>
+                                    <h2 class="h5 mb-4">{{__('your_order')}}</h2>
 
                                     {{-- БЛОК С ТОВАРАМИ --}}
                                     <ul class="list-group list-group-flush">
@@ -159,9 +185,9 @@
                                                     <img src="{{ $item->product->primaryImage ? asset('storage/' . $item->product->primaryImage->image_url) : asset('assets/images/placeholder.png') }}" alt="{{ $item->product->name }}" class="rounded" style="width: 60px;">
                                                     <div class="ms-3 flex-grow-1">
                                                         <h6 class="mb-0">{{ $item->product->name }}</h6>
-                                                        <span><small>{{ $item->quantity }} x {{ number_format($item->product->sell_price ?? $item->product->price, 0, '.', ' ') }} сум</small></span>
+                                                        <span><small>{{ $item->quantity }} x {{ number_format($item->product->sell_price ?? $item->product->price, 0, '.', ' ') }} {{__('sum')}}</small></span>
                                                     </div>
-                                                    <span class="fw-bold">{{ number_format(($item->product->sell_price ?? $item->product->price) * $item->quantity, 0, '.', ' ') }} сум</span>
+                                                    <span class="fw-bold">{{ number_format(($item->product->sell_price ?? $item->product->price) * $item->quantity, 0, '.', ' ') }} {{__('sum')}}</span>
                                                 </div>
                                             </li>
                                         @endforeach
@@ -171,49 +197,48 @@
 
                                     {{-- БЛОК С ИТОГАМИ --}}
                                     <div class="d-flex justify-content-between mb-2">
-                                        <span>Сумма товаров</span>
-                                        <span class="fw-bold">{{ number_format($cartSummary['subtotal'], 0, '.', ' ') }} сум</span>
+                                        <span>{{__('order_sum')}}</span>
+                                        <span class="fw-bold">{{ number_format($cartSummary['subtotal'], 0, '.', ' ') }} {{__('sum')}}</span>
                                     </div>
                                     {{-- Этот блок вставляется в pages/checkout.blade.php --}}
                                     <div class="d-flex flex-column mb-3">
                                         {{-- Верхняя строка с основной информацией --}}
                                         <div class="d-flex justify-content-between w-100">
-                                            <span>Доставка</span>
+                                            <span>{{__('Delivery in city')}}</span>
                                             <span class="fw-bold">
-            @if($cartSummary['shipping'] > 0)
-                                                    {{ number_format($cartSummary['shipping'], 0, '.', ' ') }} сум
+                                                 @if($cartSummary['shipping'] > 0)
+                                                    {{ number_format($cartSummary['shipping'], 0, '.', ' ') }} {{__('sum')}}
                                                 @else
-                                                    <span class="text-success">Бесплатно</span>
+                                                    <span class="text-success">{{__('free')}}</span>
                                                 @endif
-        </span>
+                                            </span>
                                         </div>
 
                                         {{-- Нижняя строка с примечанием (теперь без выравнивания по правому краю) --}}
-                                        <small class="text-muted mt-1">Выезд за город: +1000 сум/км</small>
+                                        <small class="text-muted mt-1">{{__('delivery_sum')}}</small>
                                     </div>
                                     <div class="d-flex justify-content-between fw-bold fs-5">
-                                        <span>Итого к оплате: </span>
-                                        <span>{{ number_format($cartSummary['total'], 0, '.', ' ') }} сум</span>
+                                        <span>{{__('final_price')}} </span>
+                                        <span>{{ number_format($cartSummary['total'], 0, '.', ' ') }} {{__('sum')}}</span>
                                     </div>
 
                                     <div class="d-grid mt-4">
-                                        <button type="submit" id="place-order-btn" class="btn btn-primary btn-lg">Оформить заказ</button>
+                                        <button type="submit" id="place-order-btn" class="btn btn-primary btn-lg ">
+                                            {{__('final')}}</button>
+                                    </div>
+                                    <div class="mt-3 text-center">
+                                        <small class="text-muted">
+                                            {{__('checkout agreement')}}<br>
+                                            <a href="{{ route('terms.show') }}" target="_blank">
+                                                {{ __('terms_title') }}
+                                            </a>
+                                        </small>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </form>
-
-                {{-- Скрытая форма для перенаправления на Payme --}}
-{{--                <form id="payme-form" action="https://checkout.paycom.uz/api" method="POST" style="display: none;">--}}
-{{--                    <input type="hidden" name="merchant" value="{{config('payme.merchant_id') }}">--}}
-{{--                    <input type="hidden" name="amount" id="payme-amount">--}}
-{{--                    <input type="hidden" name="account[order_id]" id="payme-order-id">--}}
-{{--                    <input type="hidden" name="account[user_id]" id="payme-user-id"> --}}{{-- <-- НОВОЕ ПОЛЕ --}}
-{{--                    <input type="hidden" name="description" value="Оплата заказа">--}}
-{{--                    <input type="hidden" name="lang" value="ru">--}}
-{{--                </form>--}}
             </div>
         </section>
     </main>
@@ -221,6 +246,16 @@
 
 @push('scripts')
     <script>
+        document.querySelectorAll('.date-select-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                // Убираем класс 'active' у всех кнопок
+                document.querySelectorAll('.date-select-btn').forEach(btn => btn.classList.remove('active'));
+                // Добавляем класс 'active' нажатой кнопке
+                this.classList.add('active');
+                // Устанавливаем значение скрытого инпута
+                document.getElementById('delivery_date_input').value = this.dataset.date;
+            });
+        });
         document.addEventListener('DOMContentLoaded', function() {
             // ===================================================================
             // ЛОГИКА ДЛЯ ПЕРЕКЛЮЧЕНИЯ АДРЕСА (остается без изменений)

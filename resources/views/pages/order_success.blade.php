@@ -17,28 +17,26 @@
                         </div>
 
                         {{-- Основной текст --}}
-                        <h1 class="display-5 fw-bold">Спасибо за ваш заказ!</h1>
+                        <h1 class="display-5 fw-bold">{{__('Thank you')}}</h1>
 
                         {{-- Показываем сообщение из сессии, если оно есть --}}
                         @if (session('success'))
                             <p class="lead">{{ session('success') }}</p>
                         @endif
 
-                        {{-- Показываем номер заказа, если он есть в сессии --}}
-                        {{-- Это необязательно, но полезно для пользователя --}}
                         @if (session('order_number'))
                             <p class="mb-4">
-                                Номер вашего заказа: <strong class="text-dark">#{{ session('order_number') }}</strong>
+                                {{__('Number of order')}} <strong class="text-dark">#{{ session('order_number') }}</strong>
                             </p>
                         @endif
 
                         <p class="mb-5">
-                            Спасибо за заказ в течении рабочего времени с вами свяжется наш администратор.
+                            {{__('Order comment')}}
                         </p>
 
                         {{-- Кнопка для возврата на главную --}}
                         <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
-                            <a href="{{ route('welcome') }}" class="btn btn-primary btn-lg px-4">Вернуться на главную</a>
+                            <a href="{{ route('welcome') }}" class="btn btn-primary btn-lg px-4">{{__('Back to main')}}</a>
                             {{-- Можно добавить ссылку на личный кабинет --}}
                             {{-- <a href="{{ route('account.orders') }}" class="btn btn-outline-secondary btn-lg px-4">Мои заказы</a> --}}
                         </div>

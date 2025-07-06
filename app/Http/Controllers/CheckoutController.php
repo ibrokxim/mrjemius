@@ -26,6 +26,7 @@ class CheckoutController extends Controller
     public function index()
     {
         $user = Auth::user();
+        $addresses = $user->addresses()->get();
         $cartItems = $this->cartService->getItems();
         $cartSummary = $this->cartService->getSummary(); // Метод должен возвращать subtotal, total и т.д.
 
@@ -33,6 +34,13 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('error', 'Ваша корзина пуста.');
         }
 
+        $latestAddress = $user->addresses()->latest()->first();
+
+        $deliveryDates = [
+            'today' => now()->format('Y-m-d'),
+            'tomorrow' => now()->addDay()->format('Y-m-d'),
+            'day_after' => now()->addDays(2)->format('Y-m-d'),
+        ];
 
         $addresses = $user->addresses()->get();
         $deliveryMethod = session('delivery_method', 'delivery');
@@ -41,6 +49,8 @@ class CheckoutController extends Controller
             'cartSummary' => $cartSummary,
             'addresses' => $addresses,
             'deliveryMethod' => $deliveryMethod,
+            'deliveryDates' => $deliveryDates,
+            'latestAddress' => $latestAddress,
         ]);
     }
 
@@ -67,7 +77,7 @@ class CheckoutController extends Controller
             'payment_method' => 'required|string|in:cash,card_online',
             'customer_notes' => 'nullable|string|max:1000',
             'address_option' => 'required_if:delivery_method,delivery|string',
-
+            'delivered_at' => 'required|date_format:Y-m-d',
             // Поля нового адреса обязательны, ТОЛЬКО если выбрана опция "new"
 
         ]);
@@ -116,6 +126,7 @@ class CheckoutController extends Controller
                 'shipping_method' => $validated['delivery_method'],
                 'payment_method' => $validated['payment_method'],
                 'customer_notes' => $validated['customer_notes'],
+                'delivered_at' => $validated['delivered_at'],
             ]);
 
             foreach ($cartItems as $item) {
@@ -140,14 +151,11 @@ class CheckoutController extends Controller
             }
             return back()->with('error', 'Произошла ошибка при создании заказа.');
         }
-
-        // --- Определяем, что делать дальше, в зависимости от способа оплаты ---
-
+        $this->cartService->clear();
         if ($validated['payment_method'] === 'card_online') {
-            // ОПЛАТА КАРТОЙ: Возвращаем JSON для редиректа на Payme
             return response()->json([
                 'success' => true,
-                'amount' => $order->total_amount ,
+                'amount' => $order->total_amount * 100 ,
                 'order_id' => $order->id,
                 'user_id' => $order->user_id
             ]);
@@ -160,7 +168,7 @@ class CheckoutController extends Controller
             $this->cartService->clear();
 
             return redirect()->route('order.success')->with([
-                'success' => 'Ваш заказ принят в обработку!',
+                'success' => __('success'),
                 'order_number' => $order->order_number
             ]);
         }

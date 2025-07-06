@@ -131,6 +131,35 @@ class ProductResource extends Resource
                                             ->label('Рекомендуемый'),
                                     ]),
 
+                                Section::make('Управление отображением')
+                                    ->schema([
+                                        TextInput::make('sort_order')
+                                            ->label('Порядок сортировки (топ)')
+                                            ->helperText('Чем больше число, тем выше товар в списке. Например, 100.')
+                                            ->numeric()
+                                            ->default(0),
+                                    ])->collapsible(),
+                                Section::make('Фискальные данные (для чеков Payme)')
+                                    ->description('Эти данные обязательны для фискализации онлайн-платежей.')
+                                    ->columns(2)
+                                    ->schema([
+                                        TextInput::make('ikpu_code')
+                                            ->label('Код ИКПУ')
+                                            ->helperText('Найти на tasnif.soliq.uz')
+                                        ->nullable(),
+
+                                        TextInput::make('package_code')
+                                            ->label('Код упаковки')
+                                            ->helperText('Найти на tasnif.soliq.uz')
+                                            ->nullable(),
+
+
+                                        TextInput::make('units_code')
+                                            ->label('Код единицы измерения')
+                                            ->helperText('Например, для штук - 058.')
+                                            ->nullable()
+                                    ])->collapsible()->collapsed(),
+
                                 KeyValue::make('attributes')
                                     ->label('Дополнительные атрибуты(основные аттрибуты: ккал, белки, жиры, углеводы)')
                                     ->keyLabel('Название атрибута')

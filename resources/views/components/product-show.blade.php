@@ -52,7 +52,7 @@
                     <div class="col-12">
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb mb-0">
-                                <li class="breadcrumb-item"><a href="{{ route('welcome') }}">Главная</a></li>
+                                <li class="breadcrumb-item"><a href="{{ route('welcome') }}">{{__('main')}}</a></li>
                                 @if($product->category)
                                     <li class="breadcrumb-item"><a href="{{ route('category.show', $product->category->slug) }}">{{ $product->category->name }}</a></li>
                                 @endif
@@ -111,20 +111,20 @@
                             @endif
                             <h1 class="mb-1">{{ $product->name }}</h1>
                             <div class="mb-4 d-flex align-items-center">
-                                {!! $product->stock_quantity > 0 ? '<span class="text-success me-3">В наличии</span>' : '<span class="text-danger me-3">Нет в наличии</span>' !!}
+                                {!! $product->stock_quantity > 0 ? '<span class="text-success me-3">' . __('In sklad') .'</span>' : '<span class="text-danger me-3">' . __('No in sklad') . '</span>' !!}
                                 @if($reviewsCount > 0)
                                     <small class="text-warning">
                                         @for ($i = 1; $i <= 5; $i++)<i class="bi bi-star{{ $i <= round($avgRating) ? '-fill' : '' }}"></i>@endfor
                                     </small>
                                     <a href="#reviews-tab-pane" class="ms-2 text-muted">({{ $reviewsCount }} {{ trans_choice('отзыв|отзыва|отзывов', $reviewsCount) }})</a>
                                 @else
-                                    <small class="text-muted">Нет отзывов</small>
+                                    <small class="text-muted">{{__('No review')}}</small>
                                 @endif
                             </div>
                             <div class="fs-4">
-                                <span class="fw-bold text-dark">{{ number_format($product->sale_price ?? $product->price,  0, '', ' ') }} сум</span>
+                                <span class="fw-bold text-dark">{{ number_format($product->sale_price ?? $product->price,  0, '', ' ') }} {{__('sum')}}</span>
                                 @if($product->sale_price && $product->sale_price < $product->price)
-                                    <span class="text-decoration-line-through text-muted ms-1">{{ number_format($product->price,  0, '', ' ') }} сум</span>
+                                    <span class="text-decoration-line-through text-muted ms-1">{{ number_format($product->price,  0, '', ' ') }} {{__('sum')}}</span>
                                 @endif
                             </div>
 
@@ -148,13 +148,13 @@
                                                 data-product-id="{{ $product->id }}"
                                             {{ $productInCart ? 'disabled' : '' }}>
                                             <i class="feather-icon icon-shopping-bag me-2"></i>
-                                            <span class="btn-text">{{ $productInCart ? 'В корзине' : 'В корзину' }}</span>
+                                            <span class="btn-text">{{ $productInCart ? __('In cart'): __('Add to cart')}}</span>
                                             <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                                         </button>
                                     @else
                                         {{-- ЕСЛИ ПОЛЬЗОВАТЕЛЬ ГОСТЬ --}}
                                         <button type="button" class="btn btn-primary w-100 h-100" data-bs-toggle="modal" data-bs-target="#userModal">
-                                            <i class="feather-icon icon-shopping-bag me-2"></i>В корзину
+                                            <i class="feather-icon icon-shopping-bag me-2"></i>{{__('Add to cart')}}
                                         </button>
                                     @endauth
                                 </div>
@@ -196,41 +196,93 @@
                                             }
                                         }
                                     }
+                                       $displayOrder = [
+                                            'Вес, г',
+                                            'Белки',
+                                            'Жиры',
+                                            'Углеводы',
+                                            'Энергетическая ценность',
+                                            'Пищевые волокна',
+                                            'Ккал'
+                                        ];
+
+                                        // 2. Создаем новый, отсортированный массив
+                                        $sortedAttributes = [];
+
+                                        // 3. Сначала добавляем атрибуты в заданном порядке
+                                        foreach ($displayOrder as $key) {
+                                            if (array_key_exists($key, $allAttributes)) {
+                                                $sortedAttributes[$key] = $allAttributes[$key];
+                                            }
+                                        }
+
+                                        // 4. Затем добавляем все остальные атрибуты, которые не вошли в список
+                                        $remainingAttributes = array_diff_key($allAttributes, $sortedAttributes);
+                                        $sortedAttributes = array_merge($sortedAttributes, $remainingAttributes);
                                 @endphp
 
-                                <h4 class="mb-3">Пищевая ценность на 100г продукта</h4>
+                                <h4 class="mb-3">{{__('nutritional value')}}</h4>
 
                                 {{-- Краткий summary-блок ("квадрат") --}}
-                                <div class="p-3 border rounded-3 bg-light d-flex justify-content-around text-center flex-wrap gap-3">
-                                    @foreach (['белки', 'жиры', 'углеводы', 'ккал'] as $keyword)
-                                        @if(isset($keySpecs[$keyword]))
-                                            <div>
-                                                <div class="fw-bold fs-4">{{ $keySpecs[$keyword]['value'] }}</div>
-                                                <div class="small text-muted">{{ $keyword }}</div>
-                                            </div>
-                                        @endif
-                                    @endforeach
-                                </div>
-
-                                {{-- Детальная таблица (выводим первые 5 из ВСЕХ атрибутов) --}}
-                                <div class="mt-4">
-                                    <h4 class="mb-3">Характеристики</h4>
-                                    <table class="product-specs-table">
-                                        <tbody>
-                                        @foreach(array_slice($allAttributes, 0, 5, true) as $name => $value)
-                                            <tr>
-                                                <td class="spec-name">{{ $name }}</td>
-                                                <td class="spec-dots"></td>
-                                                <td class="spec-value">{{ $value }}</td>
-                                            </tr>
+                                    {{-- Краткий summary-блок ("квадрат") --}}
+                                    <div class="p-3 border rounded-3 bg-light d-flex justify-content-around text-center flex-wrap gap-3">
+                                        @foreach (['белки', 'жиры', 'углеводы', 'ккал'] as $keyword)
+                                            @if(isset($keySpecs[$keyword]))
+                                                <div>
+                                                    <div class="fw-bold fs-4">{{ $keySpecs[$keyword]['value'] }}</div>
+                                                    {{-- Переводим название характеристики --}}
+                                                    <div class="small text-muted">{{ __($keySpecs[$keyword]['name']) }}</div>
+                                                </div>
+                                            @endif
                                         @endforeach
-                                        </tbody>
-                                    </table>
-                                    {{-- Ссылка для показа всех характеристик (если их больше 5) --}}
-                                    @if(count($allAttributes) > 5)
-                                        <a href="#all-specs-tab-pane" class="text-decoration-none" id="show-all-specs-link">Все характеристики</a>
-                                    @endif
-                                </div>
+                                    </div>
+                                    <div class="mt-4">
+                                        <h4 class="mb-3">{{__('characteristics')}}</h4>
+                                        @php
+                                            $displayOrder = [
+                                                'Вес, г',
+                                                'Белки',
+                                                'Жиры',
+                                                'Углеводы',
+                                                'Энергетическая ценность',
+                                                'Пищевые волокна',
+                                                'Ккал'
+                                            ];
+
+                                            // 2. Создаем массив для отсортированных атрибутов
+                                            $sortedAttributes = [];
+
+                                            // 3. Сначала добавляем атрибуты в заданном порядке
+                                            foreach ($displayOrder as $key) {
+                                                if (array_key_exists($key, $allAttributes)) {
+                                                    $sortedAttributes[$key] = $allAttributes[$key];
+                                                }
+                                            }
+
+                                            // 4. Затем добавляем все остальные атрибуты, которые не вошли в список
+                                            $remainingAttributes = array_diff_key($allAttributes, $sortedAttributes);
+                                            $sortedAttributes = array_merge($sortedAttributes, $remainingAttributes);
+
+                                        @endphp
+
+                                        <table class="product-specs-table">
+                                            <tbody>
+                                            {{-- 5. Выводим первые 5 элементов из нашего НОВОГО отсортированного массива --}}
+                                            @foreach(array_slice($sortedAttributes, 0, 5, true) as $name => $value)
+                                                <tr>
+                                                    <td class="spec-name">{{ __($name) }}</td>
+                                                    <td class="spec-dots"></td>
+                                                    <td class="spec-value">{{ $value }}</td>
+                                                </tr>
+                                            @endforeach
+                                            </tbody>
+                                        </table>
+
+                                        {{-- Ссылка для показа всех характеристик (если их больше 5) --}}
+                                        @if(count($allAttributes) > 5)
+                                            <a href="#all-specs-tab-pane" class="text-decoration-none" id="show-all-specs-link">{{__('All characteristics')}}</a>
+                                        @endif
+                                    </div>
                             @endif
                         </div>
                     </div>
@@ -248,37 +300,37 @@
                             {{-- Вкладка "Состав" (теперь первая и активная по умолчанию) --}}
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link active" id="composition-tab" data-bs-toggle="tab" data-bs-target="#composition-tab-pane" type="button" role="tab" aria-controls="composition-tab-pane" aria-selected="true">
-                                    Состав
+                                    {{__('Sostav')}}
                                 </button>
                             </li>
                             {{-- Вкладка "Детали продукта" --}}
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="product-details-tab" data-bs-toggle="tab" data-bs-target="#product-details-tab-pane" type="button" role="tab" aria-controls="product-details-tab-pane" aria-selected="false">
-                                    Описание
+                                    {{__('Description')}}
                                 </button>
                             </li>
 
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link" id="all-specs-tab" data-bs-toggle="tab" data-bs-target="#all-specs-tab-pane" type="button" role="tab" aria-controls="all-specs-tab-pane" aria-selected="false">
-                                        Все характеристики
+                                        {{__('All characteristics')}}
                                     </button>
                                 </li>
                             {{-- Вкладка "Доставка" --}}
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="delivery-tab" data-bs-toggle="tab" data-bs-target="#delivery-tab-pane" type="button" role="tab" aria-controls="delivery-tab-pane" aria-selected="false">
-                                    Доставка
+                                    {{__('Delivery')}}
                                 </button>
                             </li>
                             {{-- Вкладка "Оплата" --}}
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="payment-tab" data-bs-toggle="tab" data-bs-target="#payment-tab-pane" type="button" role="tab" aria-controls="payment-tab-pane" aria-selected="false">
-                                    Оплата
+                                    {{__('Payment')}}
                                 </button>
                             </li>
                             {{-- Вкладка "Отзывы" --}}
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews-tab-pane" type="button" role="tab" aria-controls="reviews-tab-pane" aria-selected="false">
-                                    Отзывы({{$product->reviews()->count()}})
+                                    {{__('Reviews')}}({{$product->reviews()->count()}})
                                 </button>
                             </li>
                         </ul>
@@ -314,13 +366,13 @@
                                     @php
                                         // 1. Определяем желаемый порядок ключей
                                         $displayOrder = [
-                                            'Вес, г',
-                                            'Белки',
-                                            'Жиры',
-                                            'Углеводы',
-                                            'Энергетическая ценность',
-                                            'Пищевые волокна',
-                                            'Ккал'
+                                             'Weight, g',
+                                            'Proteins',
+                                            'Fats',
+                                            'Carbohydrates',
+                                            'Energy value',
+                                            'Dietary fiber',
+                                            'Kcal'
                                         ];
                                         // 2. Создаем копию всех атрибутов, чтобы из нее удалять уже выведенные
                                         $otherAttributes = $allAttributes;
@@ -345,7 +397,7 @@
                                         {{-- 4. Теперь выводим все остальные атрибуты, которые не вошли в основной список --}}
                                         @foreach ($otherAttributes as $name => $value)
                                             <tr>
-                                                <td class="fw-medium">{{ $name }}</td>
+                                                <td class="fw-medium">{{ __($name) }}</td>
                                                 <td class="text-end">{{ $value }}</td>
                                             </tr>
                                         @endforeach
@@ -361,8 +413,8 @@
                                         {!! $product->delivery_info !!}
                                     @else
                                         {{-- Можно вывести какой-то текст по умолчанию --}}
-                                        <h4>Стандартные условия доставки</h4>
-                                        <p>Мы доставляем наши товары по всей стране. Стоимость и сроки доставки будут рассчитаны при оформлении заказа. Для получения более подробной информации, пожалуйста, свяжитесь с нашей службой поддержки.</p>
+                                        <h4>{{__('Delivery terms')}}</h4>
+                                        <p>{{__('Delivery description')}}</p>
                                     @endif
                                 </div>
                             </div>
@@ -374,8 +426,8 @@
                                         {!! $product->payment_info !!}
                                     @else
                                         {{-- Можно вывести какой-то текст по умолчанию --}}
-                                        <h4>Способы оплаты</h4>
-                                        <p>Вы можете оплатить ваш заказ онлайн с помощью банковской карты или через другие доступные платежные системы. Все платежи безопасны и защищены.</p>
+                                        <h4>{{__('payment_methods')}}</h4>
+                                        <p>{{__('Payment methods description')}}</p>
                                     @endif
                                 </div>
                             </div>
@@ -397,7 +449,7 @@
                 <div class="container">
                     <div class="row">
                         <div class="col-12">
-                            <h3>Похожие товары</h3>
+                            <h3>{{__('Similar products')}}</h3>
                         </div>
                     </div>
                     <div class="row g-4 row-cols-lg-5 row-cols-2 row-cols-md-2 mt-2">
@@ -598,7 +650,7 @@
                     if (response.ok && data.success) {
                         button.classList.remove('btn-primary');
                         button.classList.add('btn-success');
-                        if (btnText) btnText.textContent = 'В корзине';
+                        if (btnText) btnText.textContent = '{{__('In cart')}}';
                         updateCartCount(data.cart_count);
                     } else {
                         button.disabled = false;
