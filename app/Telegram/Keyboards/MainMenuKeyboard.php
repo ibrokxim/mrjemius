@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Telegram\Keyboards;
-
 use Telegram\Bot\Keyboard\Keyboard;
 
 class MainMenuKeyboard
@@ -15,11 +14,11 @@ class MainMenuKeyboard
             ])
             ->row([
                 Keyboard::button(['text' => '👤 Мои заказы']),
-                Keyboard::button(['text' => '❤️ Избранное']),
+//                Keyboard::button(['text' => '❤️ Избранное']),
             ])
             ->row([
                 Keyboard::button(['text' => '📞 Обратная связь']),
-                Keyboard::button(['text' => 'ℹ️ О нас']),
+                Keyboard::button(['text' => 'ℹ️ О нас', 'web_app' => ['url' => 'https://mrdjemiuszero.uz/about']]),
             ])
             ->setResizeKeyboard(true);
     }

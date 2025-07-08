@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\CartItem;
+use App\Models\Product;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 
@@ -145,5 +146,17 @@ class CartService
             return Auth::user()->cartItems()->sum('quantity');
         }
         return 0;
+    }
+
+    public function itemExists(int $productId, int $userId): bool
+    {
+        return CartItem::where('user_id', $userId)
+            ->where('product_id', $productId)
+            ->exists();
+    }
+    public function findItem(int $cartItemId): ?CartItem
+    {
+        if (!Auth::check()) return null;
+        return Auth::user()->cartItems()->find($cartItemId);
     }
 }

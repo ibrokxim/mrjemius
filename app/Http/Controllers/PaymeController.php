@@ -100,8 +100,35 @@ class PaymeController extends Controller
                 ]
             ]]);
         }
+        $fiscalItems = [];
+        foreach ($order->items as $item) {
+            $product = $item->product;
 
-        return response()->json(['id' => $id, 'result' => ['allow' => true]]);
+            // Проверяем наличие обязательных фискальных полей у товара
+            if (empty($product->ikpu_code) || empty($product->package_code)) {
+                Log::error("Фискализация невозможна: у товара '{$product->name}' (ID: {$product->id}) отсутствуют фискальные данные.");
+                return $this->sendErrorResponse(-32400, ['ru' => 'Ошибка в данных товара, фискализация невозможна.', 'uz' => 'Tovarlar maʼlumotlarida xatolik, fiskallashtirishning iloji yoʻq.', 'en' => 'Product data error, fiscalization is not possible.'], $id);
+            }
+
+            $fiscalItems[] = [
+                'discount' => 0, // Установите значение, если у вас есть скидки на уровне позиции
+                'title' => $product->getTranslation('name', 'ru'), // Название товара на русском
+                'price' => ($item->price_at_purchase ?? $product->price) * 100, // Цена за единицу в тийинах
+                'count' => $item->quantity,
+                'code' => (string)$product->ikpu_code,           // <-- Используем новое поле
+                'package_code' => (string)$product->package_code, // <-- Используем новое поле
+                'vat_percent' => 12, // <-- Используем новое поле (должно быть числом)
+                 //'units'    => $product->units_code,    // <-- Раскомментировать, если используете
+            ];
+        }
+
+        return response()->json(['id' => $id, 'result' => [
+            'allow' => true,
+            'detail' => [
+                'receipt_type' => 0,
+                'items' => $fiscalItems,
+            ]
+        ]]);
     }
 
     private function createTransaction(array $params, $id)
@@ -114,8 +141,6 @@ class PaymeController extends Controller
             ->first();
 
         if ($existingOrderTransaction) {
-            // Если найдена другая транзакция для этого заказа, которая не отменена,
-            // то этот заказ уже в процессе оплаты. Блокируем новую попытку.
             return response()->json(['id' => $id, 'error' => [
                 'code' => -31050, // Используем код ошибки "неверный ввод 'account'"
                 'message' => [
@@ -128,11 +153,6 @@ class PaymeController extends Controller
                 ]
             ]]);
         }
-        // === КОНЕЦ НОВОЙ ПРОВЕРКИ ===
-
-
-        // Проверяем, можно ли вообще провести эту операцию (сумма, статус заказа и т.д.)
-        // Ваш вызов checkPerformTransaction здесь абсолютно правильный.
         $checkResponse = $this->checkPerformTransaction($params, $id);
         if (property_exists($checkResponse->getData(), 'error') && $checkResponse->getData()->error !== null) {
             return $checkResponse;

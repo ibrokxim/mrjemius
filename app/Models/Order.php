@@ -28,6 +28,7 @@ class Order extends Model
         'loyalty_points_spent',
         'loyalty_points_discount_amount',
         'payment_method',
+        'source',
         'payment_status',
         'transaction_id',
         'customer_notes',
