@@ -2,6 +2,7 @@
 // Файл: app/Telegram/Handlers/CheckoutInputHandler.php
 namespace App\Telegram\Handlers;
 
+
 class CheckoutInputHandler extends BaseHandler
 {
     public function handle(): void
@@ -35,4 +36,5 @@ class CheckoutInputHandler extends BaseHandler
 
         (new CheckoutHandler($this->update))->askForPaymentMethod(); // Запрашиваем способ оплаты
     }
+
 }

@@ -25,6 +25,8 @@ class User extends Authenticatable
         'phone_number',
         'loyalty_points',
         'loyalty_card_number',
+        'login_token',
+        'login_token_expires_at',
         'is_admin',
     ];
 
@@ -97,4 +99,6 @@ class User extends Authenticatable
     {
         return $this->wishlistProducts()->where('product_id', $product->id)->exists();
     }
+
+
 }

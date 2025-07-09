@@ -1,11 +1,13 @@
 <?php
 
+use App\Http\Controllers\Auth\TelegramLoginController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\TelegramPaymentController;
 use App\Http\Controllers\WishlistController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\BaseController;
@@ -49,7 +51,9 @@ Route::middleware('auth')->group(function () {
     Route::delete('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
     Route::post('/cart/move-from-wishlist', [CartController::class, 'moveFromWishlist'])->name('cart.move.from.wishlist');
 });
-Route::middleware('auth')->prefix('checkout')->name('checkout.')->group(function () {
+
+Route::get('/login-via-telegram/{token}', [TelegramLoginController::class, 'loginFromToken'])->name('telegram.login.token');
+Route::middleware([ 'telegram.auth','auth'])->prefix('checkout')->name('checkout.')->group(function () {
     Route::get('/', [CheckoutController::class, 'index'])->name('index'); // Страница оформления
     Route::post('/place-order', [CheckoutController::class, 'store'])->name('store'); // Обработка заказа
 });
@@ -63,7 +67,8 @@ Route::get('/contacts', [PageController::class, 'contacts'])->name('contacts');
 Route::get('/terms-and-conditions', function () {
     return view('pages.terms'); // Мы будем использовать шаблон 'pages.terms'
 })->name('terms.show');
-// routes/web.php
+
+Route::get('/telegram/pay', [TelegramPaymentController::class, 'show'])->name('telegram.payment.show');
 
 Route::get('language/{locale}', [LanguageController::class, 'switchLanguage'])->name('language.switch')->where('language', 'ru|uz');;
 

@@ -99,7 +99,7 @@ class CheckoutController extends Controller
                         'phone_number' => $validated['phone_number'],
                         'address_line_1' => $validated['address_line_1'],
                         'city' => $validated['city'],
-                        'postal_code' => '000000', // Можно сделать необязательным
+                        'postal_code' => '000000',
                         'country_code' => 'UZ',
                     ]);
                     $shippingAddressId = $newAddress->id;

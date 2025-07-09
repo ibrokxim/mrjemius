@@ -8,21 +8,31 @@ abstract class BaseHandler
 {
     protected array $update;
     protected int $chatId;
-    protected ?string $text;
-    protected ?string $callbackData;
+    protected ?string $text = null;
+    protected ?string $callbackData = null;
     protected ?int $messageId;
     protected User $user;
 
     public function __construct(array $update)
     {
         $this->update = $update;
-        $fromData = $update['message']['from'] ?? $update['callback_query']['from'];
-        $this->chatId = $fromData['id'];
+        $fromData = $update['message']['from'] ?? $update['callback_query']['from'] ?? null;
+        if (!$fromData) {
+            throw new \Exception('Не удалось определить пользователя из данных Telegram.');
+        }
+        $this->chatId = $update['message']['chat']['id'] ?? $update['callback_query']['message']['chat']['id'] ?? $fromData['id'];
 
-        //$this->chatId = $update['message']['chat']['id'] ?? $update['callback_query']['message']['chat']['id'];
-        $this->text = $update['message']['text'] ?? null;
-        $this->callbackData = $update['callback_query']['data'] ?? null;
-        $this->messageId = $update['message']['message_id'] ?? $update['callback_query']['message']['message_id'] ?? null;
+        if (isset($update['message'])) {
+            $this->messageId = $update['message']['message_id'];
+            if (isset($update['message']['text'])) {
+                $this->text = $update['message']['text'];
+            }
+        } elseif (isset($update['callback_query'])) {
+            $this->messageId = $update['callback_query']['message']['message_id'];
+            $this->callbackData = $update['callback_query']['data'];
+        } else {
+            $this->messageId = null;
+        }
 
         $this->user = User::firstOrCreate(
             ['telegram_id' => $fromData['id']],

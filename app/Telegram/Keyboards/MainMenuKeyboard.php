@@ -14,7 +14,7 @@ class MainMenuKeyboard
             ])
             ->row([
                 Keyboard::button(['text' => '👤 Мои заказы']),
-//                Keyboard::button(['text' => '❤️ Избранное']),
+                Keyboard::button(['text' => '📄 Публичная офферта', 'web_app' => ['url' => 'https://mrdjemiuszero.uz/terms-and-conditions']]),
             ])
             ->row([
                 Keyboard::button(['text' => '📞 Обратная связь']),

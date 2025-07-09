@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\CartItem;
-use App\Models\Product;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 
@@ -105,11 +104,7 @@ class CartService
         Auth::user()->cartItems()->delete();
     }
 
-    /**
-     * Получить итоговые суммы по корзине.
-     *
-     * @return array
-     */
+
     public function getSummary(string $deliveryMethod = 'delivery'): array
     {
         $cartItems = $this->getItems();

@@ -13,3 +13,4 @@ Route::any('/payme/callback',[PaymeController::class, 'handle'])->middleware(Pay
 //    return Payme::handle($request);
 //})->middleware(PaymeCheck::class);
 Route::post('/telegram/webhook', [TelegramController::class, 'handle'])->name('telegram.webhook');
+Route::post('/telegram-auth', [App\Http\Controllers\TelegramAuthController::class, 'authenticate']);

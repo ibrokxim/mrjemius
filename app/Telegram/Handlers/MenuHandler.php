@@ -1,12 +1,12 @@
 <?php
 namespace App\Telegram\Handlers;
 
-use App\Models\Category;
 use App\Models\User;
+use App\Models\Category;
 use App\Services\CartService;
-use App\Telegram\Keyboards\MainMenuKeyboard;
 use Telegram\Bot\Keyboard\Keyboard;
 use Telegram\Bot\Laravel\Facades\Telegram;
+use App\Telegram\Keyboards\MainMenuKeyboard;
 
 class MenuHandler extends BaseHandler
 {
@@ -17,30 +17,34 @@ class MenuHandler extends BaseHandler
                 $this->handleStart();
                 break;
 
+            case '/catalog':
             case '🛍 Каталог':
                 self::showCategories($this->chatId);
                 break;
+
+            case '/cart':
             case '🛒 Корзина':
                 $this->showCart();
                 break;
 
+            case '/myorders':
+            case '👤 Мои заказы':
+                $this->showMyOrders(1);
+                break;
+
+            case '/support':
             case '📞 Обратная связь':
                 $this->handleFeedback(); // Вызываем метод для "Обратной связи"
                 break;
 
             default:
-                // Пересылаем любое другое сообщение менеджеру
-                $this->forwardMessageToManager();
                 break;
 
-            // Другие кнопки главного меню будут здесь
         }
     }
 
     protected function handleStart(): void
     {
-       // User::updateOrCreate(['telegram_id' => $this->chatId], ['name' => $this->update['message']['from']['first_name'] ?? 'Пользователь']);
-
         Telegram::sendMessage([
             'chat_id' => $this->chatId,
             'text' => "Добро пожаловать, {$this->user->name}! 👋",
@@ -71,46 +75,19 @@ class MenuHandler extends BaseHandler
         ]);
     }
 
-    protected function handleAbout(): void
-    {
-        $text = "<b>Mr. Djemius Zero</b> - это магазин вкусных и полезных продуктов без сахара!\n\n";
-        $text .= "Наш сайт: mrdjemiuszero.uz\n";
-        $text .= "Телефон для связи: +998 77 132 77 00";
-
-        Telegram::sendMessage([
-            'chat_id' => $this->chatId,
-            'text' => $text,
-            'parse_mode' => 'HTML',
-        ]);
-    }
-
     protected function handleFeedback(): void
     {
         $text = "📞 *Связаться с нами:*\n\n";
         $text .= "Вы можете позвонить нам напрямую по номеру:\n`+998 77 132 77 00`\n\n";
-        $text .= "Либо, если вы хотите, чтобы мы вам перезвонили, просто отправьте в этот чат ваше **имя и номер телефона**.";
+        $text .= "Либо напишите нашему менеджеру напрямую в Telegram для быстрой консультации:\n";
+        $text .= "➡️ **[@mrdjemiuszerouz](https://t.me/mrdjemiuszerouz)**"; // Создаем кликабельную ссылку
 
         Telegram::sendMessage([
             'chat_id' => $this->chatId,
             'text' => $text,
-            'parse_mode' => 'Markdown',
+            'parse_mode' => 'Markdown', // Указываем Markdown для обработки ссылок и форматирования
+            'disable_web_page_preview' => true, // Отключаем превью ссылки для более чистого вида
         ]);
-    }
-
-    protected function forwardMessageToManager(): void
-    {
-        $user = User::where('telegram_id', $this->chatId)->first();
-        if (!$user) return; // Если пользователя нет, ничего не делаем
-
-        $adminChatId = env('TELEGRAM_ADMIN_CHAT_ID');
-        if (!$adminChatId) return;
-
-        $notificationText = "💬 *Новое сообщение от клиента!*\n\n";
-        $notificationText .= "*От:* {$user->name} (`{$user->telegram_id}`)\n";
-        $notificationText .= "*Сообщение:* {$this->text}";
-
-        Telegram::sendMessage(['chat_id' => $adminChatId, 'text' => $notificationText, 'parse_mode' => 'Markdown']);
-        Telegram::sendMessage(['chat_id' => $this->chatId, 'text' => "Спасибо! Ваше сообщение принято."]);
     }
 
     public function showCart(bool $isEdit = false, ?int $messageId = null): void
@@ -121,7 +98,6 @@ class MenuHandler extends BaseHandler
 
         if ($summary['count'] === 0) {
             $text = 'Ваша корзина пуста.';
-            // Если это редактирование, меняем текст существующего сообщения
             if ($isEdit && $messageId) {
                 Telegram::editMessageText(['chat_id' => $this->chatId, 'message_id' => $messageId, 'text' => $text, 'reply_markup' => null]);
             } else {
@@ -138,7 +114,6 @@ class MenuHandler extends BaseHandler
             $text .= "▪️ *{$productName}*\n";
             $text .= "    `" . number_format($item->product->price * $item->quantity, 0, '.', ' ') . " сум`\n";
 
-            // --- КНОПКИ УПРАВЛЕНИЯ ДЛЯ КАЖДОГО ТОВАРА ---
             $keyboard->row([
                 Keyboard::inlineButton(['text' => '➖', 'callback_data' => 'cart_decrease_' . $item->id]),
                 Keyboard::inlineButton(['text' => "{$item->quantity} шт.", 'callback_data' => 'noop']),
@@ -157,7 +132,7 @@ class MenuHandler extends BaseHandler
         $text .= "_(Сумма в пределах большой кольцевой, оплата курьеру наличными)_\n";
         $text .= "\n\n*Итого к онлайн-оплате:* " . number_format($summary['total'], 0, '.', ' ') . " сум";
 
-        // --- ОБЩИЕ КНОПКИ КОРЗИНЫ ---
+
         $keyboard->row([Keyboard::inlineButton(['text' => '✅ Оформить заказ', 'callback_data' => 'checkout_start'])]);
         $keyboard->row([Keyboard::inlineButton(['text' => '🗑 Очистить корзину', 'callback_data' => 'cart_clear'])]);
         $keyboard->row([Keyboard::inlineButton(['text' => '🛍 Продолжить покупки', 'callback_data' => 'back_to_categories'])]);
@@ -176,6 +151,74 @@ class MenuHandler extends BaseHandler
         } else {
             Telegram::sendMessage($params);
         }
+    }
+
+    public function showMyOrders(int $page = 1): void
+    {
+        $perPage = 5;
+
+        $orders = $this->user->orders()
+            ->latest()
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        if ($orders->isEmpty() && $page === 1) {
+            Telegram::sendMessage(['chat_id' => $this->chatId, 'text' => 'У вас пока нет заказов.']);
+            return;
+        }
+
+        $text = "👤 *Ваши заказы:*\n\nВыберите заказ, чтобы посмотреть детали.";
+        $keyboard = Keyboard::make()->inline();
+
+        foreach ($orders as $order) {
+            $statusIcon = $this->getStatusIcon($order->status);
+            $date = $order->created_at->format('d.m.Y');
+            $buttonText = "{$statusIcon} Заказ №{$order->order_number} от {$date}";
+            $keyboard->row([
+                Keyboard::inlineButton(['text' => $buttonText, 'callback_data' => 'order_details_' . $order->id])
+            ]);
+        }
+
+        // --- БЛОК ПАГИНАЦИИ ---
+        $paginationRow = [];
+        if ($orders->previousPageUrl()) {
+            $paginationRow[] = Keyboard::inlineButton(['text' => '◀️', 'callback_data' => 'orders_page_' . ($page - 1)]);
+        }
+        if ($orders->hasMorePages()) {
+            $paginationRow[] = Keyboard::inlineButton(['text' => '▶️', 'callback_data' => 'orders_page_' . ($page + 1)]);
+        }
+        if (!empty($paginationRow)) {
+            $keyboard->row($paginationRow);
+        }
+
+        // Если это не первая страница (т.е. мы пришли по кнопке пагинации), то редактируем
+        if ($page > 1 || $this->callbackData) { // $this->callbackData - признак того, что мы пришли по кнопке
+            Telegram::editMessageText([
+                'chat_id' => $this->chatId,
+                'message_id' => $this->messageId,
+                'text' => $text,
+                'parse_mode' => 'Markdown',
+                'reply_markup' => $keyboard,
+            ]);
+        } else {
+            Telegram::sendMessage([
+                'chat_id' => $this->chatId,
+                'text' => $text,
+                'parse_mode' => 'Markdown',
+                'reply_markup' => $keyboard,
+            ]);
+        }
+    }
+
+    public function getStatusIcon(string $status): string
+    {
+        return match ($status) {
+            'pending' => '🕒',
+            'processing' => '⚙️',
+            'shipped' => '🚚',
+            'delivered' => '✅',
+            'cancelled' => '❌',
+            default => '📄',
+        };
     }
 
 }

@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'test_token' => env('PAYME_TEST_PROVIDER_TOKEN'),
     'kassa_key_for_callback' => env('PAYME_KEY'),
     'min_amount' => env('PAYME_MIN_AMOUNT', 1_000_0),
     'max_amount' => env('PAYME_MAX_AMOUNT', 100_000_000_00),
