@@ -2,6 +2,9 @@
 
 namespace App\Telegram\Handlers;
 
+use App\Models\Product;
+use Exception;
+use Telegram\Bot\FileUpload\InputFile;
 use Telegram\Bot\Keyboard\Keyboard;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
@@ -13,6 +16,13 @@ class CallbackQueryHandler extends BaseHandler
         $action = $parts[0] ?? null;
 
         switch ($action) {
+            case 'product':
+                if (($parts[1] ?? null) === 'show') {
+                    $productId = (int)($parts[2] ?? 0);
+                    // Вызываем статический метод для показа товара
+                    CatalogHandler::showProduct($this->chatId, $productId, $this->messageId);
+                }
+                break;
             case 'category':
             case 'products':
             case 'addtocart':

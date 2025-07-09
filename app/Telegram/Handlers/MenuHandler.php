@@ -31,6 +31,10 @@ class MenuHandler extends BaseHandler
             case '👤 Мои заказы':
                 $this->showMyOrders(1);
                 break;
+            case '🔍 Поиск':
+            case '/search': // Добавим и текстовую команду на будущее
+                $this->handleSearchRequest();
+                break;
 
             case '/support':
             case '📞 Обратная связь':
@@ -221,4 +225,13 @@ class MenuHandler extends BaseHandler
         };
     }
 
+    protected function handleSearchRequest(): void
+    {
+        $this->setState('awaiting_search_query');
+
+        Telegram::sendMessage([
+            'chat_id' => $this->chatId,
+            'text' => 'Введите название товара для поиска:',
+        ]);
+    }
 }

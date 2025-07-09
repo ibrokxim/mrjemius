@@ -32,7 +32,7 @@
                     <p class="mb-4">Войдите через Telegram, чтобы сохранять корзину, отслеживать заказы и пользоваться бонусами.</p>
 
                     <script async src="https://telegram.org/js/telegram-widget.js?22"
-                            data-telegram-login="mrjemius_bot"
+                            data-telegram-login="mrdjemiusuz_bot"
                             data-size="large"
                             data-userpic="true"
                             data-request-access="write"

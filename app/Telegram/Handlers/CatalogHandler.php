@@ -44,6 +44,7 @@ class CatalogHandler extends BaseHandler
                 }
                 break;
 
+
             case 'back':
                 if (($parts[1] ?? null) === 'to' && ($parts[2] ?? null) === 'categories') {
                     $this->backToCategories();
@@ -224,6 +225,58 @@ class CatalogHandler extends BaseHandler
                 'text' => 'Произошла ошибка при добавлении в корзину.',
                 'show_alert' => true
             ]);
+        }
+    }
+    public static function showProduct(int $chatId, int $productId, ?int $messageId = null, ?string $backCallback = 'back_to_categories'): void
+    {
+        $product = Product::with('primaryImage')->find($productId);
+        if (!$product) {
+            Telegram::sendMessage(['chat_id' => $chatId, 'text' => 'Товар не найден.']);
+            return;
+        }
+
+        $price = number_format($product->price, 0, '.', ' ');
+        $text = "<b>{$product->name}</b>\n\n";
+        if ($product->description) {
+            $description = strip_tags($product->description);
+            $maxLength = 900;
+            if (mb_strlen($description) > $maxLength) {
+                $description = mb_substr($description, 0, $maxLength) . '...';
+            }
+            $text .= $description . "\n\n";
+        }
+        $text .= "Цена: {$price} сум";
+
+        $keyboard = Keyboard::make()->inline()->row([
+            Keyboard::inlineButton(['text' => '🛒 Добавить в корзину', 'callback_data' => 'addtocart_' . $product->id . '_1'])
+        ]);
+        // Кнопка назад. Для поиска она может вести просто в главное меню категорий.
+        $keyboard->row([
+            Keyboard::inlineButton(['text' => '⬅️ Назад к категориям', 'callback_data' => $backCallback])
+        ]);
+
+        $params = [
+            'chat_id' => $chatId,
+            'parse_mode' => 'HTML',
+            'reply_markup' => $keyboard,
+        ];
+
+        if ($product->primaryImage) {
+            $photoUrl = asset('storage/' . $product->primaryImage->image_url);
+            $params['photo'] = InputFile::create($photoUrl, $product->name);
+            $params['caption'] = $text;
+        } else {
+            $params['text'] = $text;
+        }
+
+        if ($messageId) {
+            try { Telegram::deleteMessage(['chat_id' => $chatId, 'message_id' => $messageId]); } catch (Exception $e) {}
+        }
+
+        if (isset($params['photo'])) {
+            Telegram::sendPhoto($params);
+        } else {
+            Telegram::sendMessage($params);
         }
     }
 

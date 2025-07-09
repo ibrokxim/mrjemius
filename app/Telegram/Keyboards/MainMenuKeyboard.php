@@ -10,10 +10,13 @@ class MainMenuKeyboard
         return Keyboard::make()
             ->row([
                 Keyboard::button(['text' => '🛍 Каталог']),
-                Keyboard::button(['text' => '🛒 Корзина']),
+                Keyboard::button(['text' => '🔍 Поиск']),
             ])
             ->row([
                 Keyboard::button(['text' => '👤 Мои заказы']),
+                Keyboard::button(['text' => '🛒 Корзина']),
+            ])
+            ->row([
                 Keyboard::button(['text' => '📄 Публичная офферта', 'web_app' => ['url' => 'https://mrdjemiuszero.uz/terms-and-conditions']]),
             ])
             ->row([
