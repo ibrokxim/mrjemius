@@ -2,20 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CartItem;
 use App\Models\Product;
+use App\Models\CartItem;
 use App\Models\WishlistItem;
-use App\Services\CartService;
 use Illuminate\Http\Request;
+use App\Services\CartService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class CartController extends Controller
 {
-     protected $cartService;
+    protected $cartService;
     public function __construct(CartService $cartService)
     {
         $this->cartService = $cartService;
@@ -24,7 +23,6 @@ class CartController extends Controller
     {
         $cartSummary = $this->cartService->getSummary();
 
-        // Передаем данные во view
         return view('cart.index', [
             'cartItems' => $cartSummary['items'],
             'subtotal' => $cartSummary['subtotal'],
@@ -47,7 +45,6 @@ class CartController extends Controller
 
         $quantity = $request->get('quantity', 1);
 
-        // Проверяем наличие товара на складе
         if ($product->stock_quantity < $quantity) {
             return response()->json([
                 'success' => false,
@@ -56,7 +53,6 @@ class CartController extends Controller
         }
 
         if (Auth::check()) {
-            // Для авторизованных пользователей
             $cartItem = CartItem::where('user_id', Auth::id())
                 ->where('product_id', $product->id)
                 ->first();
@@ -78,7 +74,6 @@ class CartController extends Controller
                 ]);
             }
         } else {
-            // Для неавторизованных пользователей (гостей)
             $sessionId = Session::getId();
             $cartItem = CartItem::where('session_id', $sessionId)
                 ->where('product_id', $product->id)
@@ -117,42 +112,35 @@ class CartController extends Controller
      */
     public function update(Request $request, CartItem $cartItem): JsonResponse
     {
-        // 1. Валидация входящих данных
         $validated = $request->validate([
             'quantity' => 'required|integer|min:1|max:100' // Ограничиваем максимальное количество для безопасности
         ]);
         $quantity = $validated['quantity'];
 
-        // 2. Проверка прав доступа: может ли текущий пользователь изменять этот элемент корзины?
         if (!$this->canAccessCartItem($cartItem)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Нет доступа к данному элементу корзины.'
-            ], 403); // 403 Forbidden
+            ], 403);
         }
 
-        // 3. Проверка наличия товара на складе
         if ($cartItem->product->stock_quantity < $quantity) {
             return response()->json([
                 'success' => false,
                 'message' => 'Недостаточно товара на складе. Доступно: ' . $cartItem->product->stock_quantity
-            ], 422); // 422 Unprocessable Entity
+            ], 422);
         }
 
-        // 4. Обновляем количество в базе данных
         $cartItem->update(['quantity' => $quantity]);
 
-        // 5. Получаем свежие итоговые данные по ВСЕЙ корзине через сервис
         $summary = $this->cartService->getSummary();
 
-        // 6. Отдельно считаем новую сумму для конкретного измененного товара
         $itemTotal = ($cartItem->product->sell_price ?? $cartItem->product->price) * $quantity;
 
-        // 7. Возвращаем успешный ответ со всеми необходимыми данными для обновления UI
         return response()->json([
             'success' => true,
             'message' => 'Количество обновлено',
-            'summary' => $summary, // <--- КЛЮЧЕВОЙ ОБЪЕКТ С ИТОГАМИ ДЛЯ JS
+            'summary' => $summary,
             'item_total_formatted' => number_format($itemTotal, 0, '.', ' '), // Отформатированная сумма для этого товара
         ]);
     }
@@ -162,25 +150,21 @@ class CartController extends Controller
      */
     public function remove(CartItem $cartItem): JsonResponse
     {
-        // 1. Проверка прав доступа
         if (!$this->canAccessCartItem($cartItem)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Нет доступа к данному элементу корзины.'
-            ], 403); // 403 Forbidden
+            ], 403);
         }
 
-        // 2. Удаляем товар из базы данных
         $cartItem->delete();
 
-        // 3. Получаем свежие итоговые данные по ВСЕЙ корзине после удаления
         $summary = $this->cartService->getSummary();
 
-        // 4. Возвращаем успешный ответ с новыми итогами
         return response()->json([
             'success' => true,
             'message' => 'Товар удален из корзины',
-            'summary' => $summary, // <--- КЛЮЧЕВОЙ ОБЪЕКТ С ИТОГАМИ ДЛЯ JS
+            'summary' => $summary,
         ]);
     }
 
@@ -231,19 +215,16 @@ class CartController extends Controller
             foreach ($wishlistItems as $wishlistItem) {
                 $product = $wishlistItem->product;
 
-                // Проверяем наличие на складе
                 if ($product->stock_quantity < 1) {
                     $skippedCount++;
                     continue;
                 }
 
-                // Проверяем, есть ли уже товар в корзине
                 $existingCartItem = CartItem::where('user_id', Auth::id())
                     ->where('product_id', $product->id)
                     ->first();
 
                 if ($existingCartItem) {
-                    // Увеличиваем количество, если можем
                     if ($existingCartItem->quantity < $product->stock_quantity) {
                         $existingCartItem->increment('quantity');
                         $addedCount++;
@@ -251,7 +232,6 @@ class CartController extends Controller
                         $skippedCount++;
                     }
                 } else {
-                    // Добавляем новый товар в корзину
                     CartItem::create([
                         'user_id' => Auth::id(),
                         'product_id' => $product->id,
@@ -260,7 +240,6 @@ class CartController extends Controller
                     $addedCount++;
                 }
 
-                // Удаляем из избранного
                 $wishlistItem->delete();
             }
         });

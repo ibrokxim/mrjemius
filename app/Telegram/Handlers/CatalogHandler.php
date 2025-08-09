@@ -15,21 +15,32 @@ class CatalogHandler extends BaseHandler
 {
     public function handle(): void
     {
+        Log::info("Callback received: {$this->callbackData}");
+
         $parts = explode('_', $this->callbackData);
         $action = $parts[0] ?? null;
 
         // Маршрутизация внутри этого обработчика
         switch ($action) {
             case 'category':
-                // При выборе категории показываем первый товар
+                // Показываем список товаров в категории
                 $categoryId = $parts[1] ?? null;
                 if ($categoryId) {
-                    $this->showProductCarousel($categoryId, 1, true);
+                    $this->showProductList($categoryId);
+                }
+                break;
+
+            case 'product':
+                // При выборе конкретного товара - показываем карусель этого товара
+                $categoryId = $parts[1] ?? null;
+                $productId = $parts[2] ?? null;
+                if ($categoryId && $productId) {
+                    $this->showProductCarouselById($categoryId, $productId);
                 }
                 break;
 
             case 'products':
-                // Навигация по товарам в категории
+                // Если нужна пагинация в карусели (возможно, при пролистывании)
                 $categoryId = $parts[1] ?? null;
                 $page = (int)($parts[3] ?? 1);
                 if ($categoryId) {
@@ -44,19 +55,101 @@ class CatalogHandler extends BaseHandler
                 }
                 break;
 
-
             case 'back':
                 if (($parts[1] ?? null) === 'to' && ($parts[2] ?? null) === 'categories') {
                     $this->backToCategories();
                 }
                 break;
+
         }
     }
+    /**
+     * Показывает список товаров в категории
+     */
+    public function showProductList($categoryId): void
+    {
+        $category = Category::find($categoryId);
+        if (!$category) {
+            $this->showError('Категория не найдена.');
+            return;
+        }
+
+        $products = $category->products()->where('is_active', true)->get();
+        if ($products->isEmpty()) {
+            $this->showEmptyCategoryMessage();
+            return;
+        }
+
+        $keyboard = Keyboard::make()->inline();
+
+        foreach ($products as $product) {
+            $keyboard->row([
+                Keyboard::inlineButton([
+                    'text' => $product->getTranslation('name', 'ru'),
+                    'callback_data' => "product_{$categoryId}_{$product->id}"
+                ])
+            ]);
+        }
+
+        $keyboard->row([
+            Keyboard::inlineButton([
+                'text' => '🔙 Назад к категориям',
+                'callback_data' => 'back_to_categories'
+            ])
+        ]);
+
+        try {
+            Telegram::editMessageText([
+                'chat_id' => $this->chatId,
+                'message_id' => $this->messageId,
+                'text' => "📦 Выберите товар из категории <b>{$category->getTranslation('name', 'ru')}</b>:",
+                'parse_mode' => 'HTML',
+                'reply_markup' => $keyboard
+            ]);
+        } catch (\Exception $e) {
+            Telegram::sendMessage([
+                'chat_id' => $this->chatId,
+                'text' => "📦 Выберите товар из категории <b>{$category->getTranslation('name', 'ru')}</b>:",
+                'parse_mode' => 'HTML',
+                'reply_markup' => $keyboard
+            ]);
+        }
+    }
+
+
+    /**
+     * Показывает подробную информацию о выбранном товаре по его ID
+     */
+    public function showProductCarouselById($categoryId, $productId): void
+    {
+        try {
+            // Получаем все активные товары в категории
+            $products = Category::find($categoryId)->products()->where('is_active', true)->get();
+
+            if ($products->isEmpty()) {
+                $this->showEmptyCategoryMessage();
+                return;
+            }
+
+            // Найдём позицию выбранного товара в коллекции
+            $page = $products->search(function ($item) use ($productId) {
+                    return $item->id == $productId;
+                }) + 1;
+
+            // Используем существующий метод карусели для показа товара с нужной позицией
+            $this->showProductCarousel($categoryId, $page, false);
+
+        } catch (\Exception $e) {
+            Log::error("Telegram showProductCarouselById error: " . $e->getMessage());
+            $this->showError('Произошла ошибка при загрузке товара.');
+        }
+    }
+
 
     /**
      * Показывает один товар из категории с пагинацией (карусель).
      */
-    protected function showProductCarousel($categoryId, $page = 1, $isFirstPage = false): void
+    public function showProductCarousel($categoryId, $page = 1, $isFirstPage = false): void
     {
         try {
             $category = Category::find($categoryId);
@@ -364,8 +457,8 @@ class CatalogHandler extends BaseHandler
         // Кнопка "Назад к категориям"
         $keyboard->row([
             Keyboard::inlineButton([
-                'text' => '🔙 Назад к категориям',
-                'callback_data' => 'back_to_categories'
+                'text' => '🔙 Назад к списку',
+                'callback_data' => "back_to_productlist_{$categoryId}"
             ])
         ]);
 

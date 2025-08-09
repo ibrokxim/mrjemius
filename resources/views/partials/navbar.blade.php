@@ -4,15 +4,33 @@
     <div class="bg-light py-2">
         <div class="container">
             <div class="d-flex justify-content-center align-items-center">
+
+                <!-- 1. ССЫЛКА НА TELEGRAM С ТЕКСТОМ ДЛЯ ДЕСКТОПА -->
+                <a href="https://t.me/mrdjemiuszerouz"
+                   class="btn btn-sm d-flex align-items-center text-decoration-none me-3"
+                   style="border-color: #FF569F; color: #FF569F;"
+                   target="_blank">
+
+                    <!-- Иконка, видна всегда -->
+                    <i class="bi bi-telegram"></i>
+
+                    <!-- Текст, виден только на экранах md и больше -->
+                    <span class="d-none d-md-inline ms-2">Написать в Telegram</span>
+                </a>
+
+                <!-- 2. Номер телефона -->
                 <div class="me-4">
                     <a href="tel:+998771327700" class="text-dark fw-semibold text-decoration-none">
-                        <i class="bi bi-telephone-fill me-1 " style="color: #FF569F"></i>
-+998 77 132 77 00
+                        <i class="bi bi-telephone-fill me-1" style="color: #FF569F"></i>
+                        +998 77 132 77 00
                     </a>
                 </div>
+
+                <!-- 3. Кнопка "Заказать звонок" -->
                 <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#contactModal">
                     {{__('form')}}
                 </button>
+
             </div>
         </div>
     </div>

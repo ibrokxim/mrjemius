@@ -24,7 +24,11 @@ class CheckoutHandler extends BaseHandler
             case 'start': $this->start(); break;
             case 'address': $this->handleAddressSelection($parts[2] ?? null); break;
             case 'date': $this->handleDateSelection($parts[2] ?? null); break;
-            case 'payment': $this->handlePaymentMethod($parts[2] ?? null); break;
+            case 'payment':
+                $methodParts = array_slice($parts, 2);
+                $method = implode('_', $methodParts);
+                $this->handlePaymentMethod($method);
+                break;
             case 'confirm': $this->createOrder(); break;
             case 'cancel': $this->cancelCheckout(); break;
         }
@@ -145,7 +149,7 @@ class CheckoutHandler extends BaseHandler
 
         $keyboard = Keyboard::make()->inline()->row([
             Keyboard::inlineButton(['text' => '💵 Наличными', 'callback_data' => 'checkout_payment_cash']),
-            Keyboard::inlineButton(['text' => '💳 Картой онлайн (Payme)', 'callback_data' => 'checkout_payment_card']),
+            Keyboard::inlineButton(['text' => '💳 Картой онлайн (Payme)', 'callback_data' => 'checkout_payment_card_online']),
         ])->row([Keyboard::inlineButton(['text' => '❌ Отменить оформление', 'callback_data' => 'checkout_cancel'])]);
         Telegram::sendMessage(['chat_id' => $this->chatId, 'text' => 'Выберите способ оплаты:', 'reply_markup' => $keyboard]);
     }
@@ -251,7 +255,6 @@ class CheckoutHandler extends BaseHandler
                     'city' => $city, 'country_code' => 'UZ', 'is_default' => false, 'postal_code' => '000000',
                 ]);
                 $shippingAddressId = $newAddress->id;
-                Log::info('[Checkout] Новый адрес успешно создан. ID: ' . $shippingAddressId);
             }
 
             Log::info('[Checkout] Создаем запись заказа (Order).');
@@ -267,9 +270,7 @@ class CheckoutHandler extends BaseHandler
                 'payment_method' => $context['payment_method'],
                 'source' => 'telegram_bot',
             ]);
-            Log::info('[Checkout] Заказ (Order) успешно создан. ID: ' . $order->id);
 
-            Log::info('[Checkout] Добавляем товары (OrderItems) в заказ.');
             foreach ($cartItems as $item) {
                 OrderItem::create([
                     'order_id' => $order->id, 'product_id' => $item->product_id,
@@ -279,7 +280,6 @@ class CheckoutHandler extends BaseHandler
                 ]);
                 $item->product->decrement('stock_quantity', $item->quantity);
             }
-            Log::info('[Checkout] Все товары успешно добавлены.');
 
             DB::commit();
             Log::info('[Checkout] Транзакция успешно закоммичена.');
@@ -300,17 +300,15 @@ class CheckoutHandler extends BaseHandler
         $this->setState(null);
         $this->setContext([]);
 
-        if ($order->payment_method === 'card') {
+        if ($order->payment_method === 'card_online') {
             Log::info("[Checkout] Способ оплаты - карта. Формируем ссылку на Web App для заказа #{$order->id}");
 
-            // 1. Параметры, которые мы передадим в наше мини-приложение
             $params_for_webapp = [
                 'order_id' => $order->id,
-                'amount' => $order->subtotal_amount * 100, // Сумма в тийинах
+                'amount' => $order->subtotal_amount * 100,
                 'user_id' => $order->user_id,
             ];
 
-            // 2. Формируем URL на наш роут с этими параметрами
             $webAppUrl = route('telegram.payment.show', $params_for_webapp);
 
             Log::info("[Checkout] Ссылка на Web App: " . $webAppUrl);
@@ -333,9 +331,7 @@ class CheckoutHandler extends BaseHandler
                 'parse_mode' => 'Markdown',
                 'reply_markup' => $keyboard,
             ]);
-            Log::info("[Checkout] Кнопка Web App отправлена пользователю.");
     } else {
-            Log::info("[Checkout] Обработка заказа #{$order->id} с оплатой наличными.");
             $order->update(['status' => 'processing']);
             (new NotificationService())->sendOrderNotifications($order);
             Telegram::sendMessage([

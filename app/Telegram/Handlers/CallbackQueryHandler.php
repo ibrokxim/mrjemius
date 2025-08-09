@@ -2,9 +2,9 @@
 
 namespace App\Telegram\Handlers;
 
+use App\Models\Category;
 use App\Models\Product;
-use Exception;
-use Telegram\Bot\FileUpload\InputFile;
+use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Keyboard\Keyboard;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
@@ -12,6 +12,8 @@ class CallbackQueryHandler extends BaseHandler
 {
     public function handle(): void
     {
+        Log::info("Callback received: {$this->callbackData}");
+
         $parts = explode('_', $this->callbackData);
         $action = $parts[0] ?? null;
 
@@ -19,8 +21,27 @@ class CallbackQueryHandler extends BaseHandler
             case 'product':
                 if (($parts[1] ?? null) === 'show') {
                     $productId = (int)($parts[2] ?? 0);
-                    // Вызываем статический метод для показа товара
                     CatalogHandler::showProduct($this->chatId, $productId, $this->messageId);
+                } elseif (is_numeric($parts[1] ?? null) && is_numeric($parts[2] ?? null)) {
+                    $categoryId = (int)$parts[1];
+                    $productId = (int)$parts[2];
+
+                    $product = Product::find($productId);
+                    if (!$product || $product->category_id !== $categoryId) {
+                        Telegram::answerCallbackQuery([
+                            'callback_query_id' => $this->update['callback_query']['id'],
+                            'text' => 'Товар не найден в категории!',
+                            'show_alert' => true
+                        ]);
+                        return;
+                    }
+
+                    $products = Category::find($categoryId)?->products()->where('is_active', true)->get();
+                    if (!$products || $products->isEmpty()) return;
+
+                    $page = $products->search(fn($item) => $item->id === $productId) + 1;
+
+                    (new CatalogHandler($this->update))->showProductCarousel($categoryId, $page, true);
                 }
                 break;
             case 'category':
@@ -30,12 +51,15 @@ class CallbackQueryHandler extends BaseHandler
                 break;
 
             case 'back':
+                if (($parts[1] ?? null) === 'to' && ($parts[2] ?? null) === 'productlist') {
+                    $categoryId = $parts[3] ?? null;
+                    if ($categoryId) {
+                        (new CatalogHandler($this->update))->showProductList($categoryId);
+                    }
+                }
                 if (($parts[1] ?? null) === 'to' && ($parts[2] ?? null) === 'categories') {
                     (new MenuHandler($this->update))::showCategories($this->chatId);
                     Telegram::deleteMessage(['chat_id' => $this->chatId, 'message_id' => $this->messageId]);
-                }
-                if (($parts[1] ?? null) === 'to' && ($parts[2] ?? null) === 'orders' && ($parts[3] ?? null) === 'list') {
-                    (new MenuHandler($this->update))->showMyOrders(1);
                 }
                 break;
 

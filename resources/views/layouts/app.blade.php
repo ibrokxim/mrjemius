@@ -1,12 +1,21 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
+    <!-- Google Tag Manager -->
+    <script>
+        (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+                new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','GTM-TKQ5TLZW');
+    </script>
+    <!-- End Google Tag Manager -->
+
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta content="Codescandy" name="author" />
     <title>@yield('title', 'Mr. Djemius Zero')</title>
-    {{-- Внутри <head> --}}
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
     <link href="{{ asset('assets/libs/slick-carousel/slick/slick.css') }}" rel="stylesheet" />
@@ -17,49 +26,40 @@
     <link href="{{ asset('assets/libs/simplebar/dist/simplebar.min.css') }}" rel="stylesheet" />
 
     <link rel="shortcut icon" type="image/x-icon" href="{{ asset('assets/images/favicon/favicon.ico') }}" />
-
-    <!-- Theme CSS -->
     <link rel="stylesheet" href="{{ asset('assets/css/theme.min.css') }}" />
     <script src="//code.jivo.ru/widget/XAsl12rHFk" async></script>
-
-
-    {{-- Скрипты аналитики --}}
-{{--    @include('partials.analytics')--}}
 
     @stack('head-scripts')
     @stack('styles')
 </head>
 
 <body>
-{{-- Включаем шапку (Navbar) --}}
+<!-- Google Tag Manager (noscript) -->
+<noscript>
+    <iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TKQ5TLZW"
+            height="0" width="0" style="display:none;visibility:hidden"></iframe>
+</noscript>
+<!-- End Google Tag Manager (noscript) -->
+
 @include('partials.navbar')
 
 <main>
-    {{-- Основной контент страницы будет вставлен сюда --}}
     @yield('content')
 </main>
 
-{{-- Включаем подвал (Footer) --}}
 @include('partials.footer')
-
-{{-- Модальные окна и боковая панель корзины --}}
 @include('partials.modals.user_modal')
 @include('partials.modals.location_modal')
 @include('partials.modals.quick_view_modal')
 @include('partials.shop_cart_offcanvas')
 @include('partials.modals.contact_modal')
 
-<!-- Libs JS -->
 <script src="https://unpkg.com/imask"></script>
 <script src="{{ asset('assets/libs/bootstrap/dist/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ asset('assets/libs/simplebar/dist/simplebar.min.js') }}"></script>
-<!-- Theme JS -->
-
-{{-- Скрипты для слайдеров и других вендоров --}}
 <script src="{{ asset('assets/js/vendors/jquery.min.js') }}"></script>
 <script src="{{ asset('assets/libs/tiny-slider/dist/min/tiny-slider.js') }}"></script>
 <script src="{{ asset('assets/js/vendors/tns-slider.js') }}"></script>
-
 <script src="{{ asset('assets/js/vendors/zoom.js') }}"></script>
 <script src="{{ asset('assets/js/vendors/countdown.js') }}"></script>
 <script src="{{ asset('assets/libs/slick-carousel/slick/slick.min.js') }}"></script>
@@ -68,6 +68,7 @@
 <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
 @stack('scripts')
 <script src="{{ asset('assets/js/theme.min.js') }}"></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const sendContactBtn = document.getElementById('sendContactFormBtn');
@@ -83,7 +84,6 @@
                 button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Отправка...';
 
                 try {
-                    // Убедитесь, что роут правильный
                     const response = await fetch("{{ route('feedback.store') }}", {
                         method: 'POST',
                         body: formData,
@@ -101,7 +101,6 @@
                         contactForm.reset();
                         alert('Спасибо! Мы скоро с вами свяжемся.');
                     } else {
-                        // Показываем ошибки валидации или другие
                         let errorMessage = data.message || 'Произошла ошибка.';
                         if (data.errors) {
                             errorMessage = Object.values(data.errors).flat().join('\n');

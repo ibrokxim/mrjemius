@@ -104,7 +104,6 @@ class PaymeController extends Controller
         foreach ($order->items as $item) {
             $product = $item->product;
 
-            // Проверяем наличие обязательных фискальных полей у товара
             if (empty($product->ikpu_code) || empty($product->package_code)) {
                 Log::error("Фискализация невозможна: у товара '{$product->name}' (ID: {$product->id}) отсутствуют фискальные данные.");
                 return $this->sendErrorResponse(-32400, ['ru' => 'Ошибка в данных товара, фискализация невозможна.', 'uz' => 'Tovarlar maʼlumotlarida xatolik, fiskallashtirishning iloji yoʻq.', 'en' => 'Product data error, fiscalization is not possible.'], $id);
@@ -377,5 +376,17 @@ class PaymeController extends Controller
             ]
         ]);
     }
+
+    private function sendErrorResponse(int $code, array $messages, $id)
+    {
+        return response()->json([
+            'id' => $id,
+            'error' => [
+                'code' => $code,
+                'message' => $messages
+            ]
+        ]);
+    }
+
 
 }

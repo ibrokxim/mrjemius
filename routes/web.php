@@ -72,4 +72,10 @@ Route::get('/telegram/pay', [TelegramPaymentController::class, 'show'])->name('t
 
 Route::get('language/{locale}', [LanguageController::class, 'switchLanguage'])->name('language.switch')->where('language', 'ru|uz');;
 
+// routes/web.php
+Route::get('/redirect-to-payme', function (\Illuminate\Http\Request $request) {
+    return view('payme.redirect', [
+        'url' => $request->query('url'),
+    ]);
+})->name('payme.redirect');
 

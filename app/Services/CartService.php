@@ -28,19 +28,15 @@ class CartService
     {
         $user = Auth::user();
         if (!$user) {
-            // Обработка для неавторизованных пользователей (можно бросить исключение или вернуть null)
             abort(403, 'Только авторизованные пользователи могут добавлять товары в корзину.');
         }
 
-        // Проверяем, есть ли уже такой товар в корзине
         $cartItem = $user->cartItems()->where('product_id', $productId)->first();
 
         if ($cartItem) {
-            // Если есть, просто обновляем количество
             $cartItem->quantity += $quantity;
             $cartItem->save();
         } else {
-            // Если нет, создаем новую запись
             $cartItem = CartItem::create([
                 'user_id' => $user->id,
                 'product_id' => $productId,

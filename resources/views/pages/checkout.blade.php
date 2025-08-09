@@ -340,7 +340,9 @@
                                 console.log('Финальный URL для редиректа:', redirectUrl);
 
                                 // 5. Перенаправляем пользователя
-                                window.location.href = redirectUrl;
+                                // Вместо window.location.href = redirectUrl;
+                                window.location.href = `{{ route('payme.redirect') }}?url=${encodeURIComponent(redirectUrl)}`;
+
 
                             } else {
                                 throw new Error(data.message || 'Произошла ошибка на сервере.');
